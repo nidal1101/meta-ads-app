@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Ads Analyzer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 700;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #059669;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #1e3a8a;
+        }
+
+        .btn-secondary:hover {
+            background: #f3f4f6;
+            transform: translateY(-2px);
+        }
+
+        .btn-analyze {
+            background: #8b5cf6;
+            color: white;
+        }
+
+        .btn-analyze:hover {
+            background: #7c3aed;
+            transform: translateY(-2px);
+        }
+
+        .controls {
+            padding: 20px 30px;
+            background: #f9fafb;
+            border-bottom: 2px solid #e5e7eb;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .control-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 8px 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 14px;
+            min-width: 150px;
+            transition: border-color 0.3s;
+        }
+
+        .control-group select:focus,
+        .control-group input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .api-config {
+            padding: 20px 30px;
+            background: #fef3c7;
+            border-bottom: 2px solid #fbbf24;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+
+        .api-config.hidden {
+            display: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            padding: 20px 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead {
+            background: #1f2937;
+            color: white;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        th {
+            padding: 12px 10px;
+            text-align: left;
+            font-weight: 600;
+            cursor: pointer;
+            user-select: none;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        th:hover {
+            background: #374151;
+        }
+
+        th.sortable::after {
+            content: ' ↕';
+            opacity: 0.5;
+            font-size: 12px;
+        }
+
+        th.sorted-asc::after {
+            content: ' ↑';
+            opacity: 1;
+        }
+
+        th.sorted-desc::after {
+            content: ' ↓';
+            opacity: 1;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid #e5e7eb;
+            transition: background-color 0.2s;
+        }
+
+        tbody tr:hover {
+            background: #f9fafb;
+        }
+
+        tbody tr.winner {
+            border-left: 4px solid #10b981;
+            background: #f0fdf4;
+        }
+
+        tbody tr.launched {
+            border-left: 4px solid #3b82f6;
+            background: #eff6ff;
+        }
+
+        tbody tr.killed {
+            border-left: 4px solid #ef4444;
+            background: #fef2f2;
+        }
+
+        td {
+            padding: 12px 10px;
+        }
+
+        .decision-badge {
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: inline-block;
+        }
+
+        .decision-winner {
+            background: #10b981;
+            color: white;
+        }
+
+        .decision-launched {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .decision-killed {
+            background: #ef4444;
+            color: white;
+        }
+
+        .format-badge {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .learnings-input {
+            width: 200px;
+            min-height: 60px;
+            padding: 6px;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .learnings-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .metric {
+            font-weight: 600;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .metric-good {
+            color: #10b981;
+        }
+
+        .metric-bad {
+            color: #ef4444;
+        }
+
+        .analysis-section {
+            padding: 30px;
+            background: #f9fafb;
+            border-top: 2px solid #e5e7eb;
+        }
+
+        .analysis-section.hidden {
+            display: none;
+        }
+
+        .analysis-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .analysis-header h2 {
+            font-size: 24px;
+            color: #1f2937;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+        }
+
+        .insight-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .insight-card h3 {
+            font-size: 16px;
+            color: #1f2937;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .insight-card h3::before {
+            content: '📊';
+            font-size: 20px;
+        }
+
+        .insight-list {
+            list-style: none;
+        }
+
+        .insight-list li {
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .insight-list li:last-child {
+            border-bottom: none;
+        }
+
+        .insight-list li strong {
+            color: #1f2937;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .loading::after {
+            content: '...';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0%, 20% { content: '.'; }
+            40% { content: '..'; }
+            60%, 100% { content: '...'; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6b7280;
+        }
+
+        .empty-state h3 {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        .stats-bar {
+            display: flex;
+            gap: 30px;
+            padding: 20px 30px;
+            background: white;
+            border-bottom: 2px solid #e5e7eb;
+            flex-wrap: wrap;
+        }
+
+        .stat {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1f2937;
+        }
+
+        .link-cell {
+            max-width: 200px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .link-cell a {
+            color: #3b82f6;
+            text-decoration: none;
+        }
+
+        .link-cell a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📈 Meta Ads Analyzer</h1>
+            <div class="header-actions">
+                <button class="btn btn-secondary" onclick="toggleApiConfig()">⚙️ API Config</button>
+                <button class="btn btn-primary" onclick="fetchAds()">🔄 Fetch Ads</button>
+                <button class="btn btn-analyze" onclick="analyzeAds()">🤖 AI Analysis</button>
+                <button class="btn btn-secondary" onclick="exportToExcel()">📊 Export Excel</button>
+            </div>
+        </div>
+
+        <div class="api-config hidden" id="apiConfig">
+            <div class="control-group">
+                <label>Access Token</label>
+                <input type="password" id="accessToken" placeholder="Your Meta Access Token" style="min-width: 300px;">
+            </div>
+            <div class="control-group">
+                <label>Ad Account ID</label>
+                <input type="text" id="adAccountId" placeholder="act_123456789">
+            </div>
+            <div class="control-group">
+                <label>Date Range (days)</label>
+                <input type="number" id="dateRange" value="30" min="1" max="90">
+            </div>
+            <button class="btn btn-primary" onclick="saveApiConfig()">Save Config</button>
+        </div>
+
+        <div class="controls">
+            <div class="control-group">
+                <label>Filter by Decision</label>
+                <select id="filterDecision" onchange="applyFilters()">
+                    <option value="">All Decisions</option>
+                    <option value="Winner">Winner</option>
+                    <option value="Launched">Launched</option>
+                    <option value="Killed">Killed</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Author</label>
+                <select id="filterAuthor" onchange="applyFilters()">
+                    <option value="">All Authors</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Avatar</label>
+                <select id="filterAvatar" onchange="applyFilters()">
+                    <option value="">All Avatars</option>
+                </select>
+            </div>
+            <div class="control-group">
+                <label>Filter by Format</label>
+                <select id="filterFormat" onchange="applyFilters()">
+                    <option value="">All Formats</option>
+                    <option value="Video">Video</option>
+                    <option value="Image">Image</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
+        </div>
+
+        <div class="stats-bar" id="statsBar">
+            <div class="stat">
+                <span class="stat-label">Total Ads</span>
+                <span class="stat-value" id="statTotal">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Winners</span>
+                <span class="stat-value" style="color: #10b981;" id="statWinners">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg ROAS</span>
+                <span class="stat-value" id="statRoas">0.00</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Total Spend</span>
+                <span class="stat-value" id="statSpend">$0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Avg CTR</span>
+                <span class="stat-value" id="statCtr">0.00%</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="empty-state" id="emptyState">
+                <h3>No ads loaded</h3>
+                <p>Click "Fetch Ads" to load data from Meta API or use sample data</p>
+                <button class="btn btn-primary" onclick="loadSampleData()" style="margin-top: 20px;">Load Sample Data</button>
+            </div>
+            <table id="adsTable" style="display: none;">
+                <thead>
+                    <tr>
+                        <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
+                        <th class="sortable" onclick="sortTable('author')">Author</th>
+                        <th class="sortable" onclick="sortTable('landingPage')">Landing Page</th>
+                        <th class="sortable" onclick="sortTable('decision')">Decision</th>
+                        <th class="sortable" onclick="sortTable('hypothesis')">Hypothesis</th>
+                        <th class="sortable" onclick="sortTable('format')">Format</th>
+                        <th class="sortable" onclick="sortTable('avatar')">Avatar</th>
+                        <th class="sortable" onclick="sortTable('angle')">Angle/Hook</th>
+                        <th class="sortable" onclick="sortTable('ctr')">CTR (%)</th>
+                        <th class="sortable" onclick="sortTable('cpc')">CPC ($)</th>
+                        <th class="sortable" onclick="sortTable('spend')">Spend ($)</th>
+                        <th class="sortable" onclick="sortTable('roas')">ROAS</th>
+                        <th class="sortable" onclick="sortTable('frequency')">Frequency</th>
+                        <th class="sortable" onclick="sortTable('purchases')">Purchases</th>
+                        <th>Learnings</th>
+                    </tr>
+                </thead>
+                <tbody id="adsTableBody">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="analysis-section hidden" id="analysisSection">
+            <div class="analysis-header">
+                <h2>🤖 AI-Powered Insights</h2>
+                <button class="btn btn-secondary" onclick="hideAnalysis()">Close</button>
+            </div>
+            <div class="insights-grid" id="insightsGrid">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let adsData = [];
+        let filteredData = [];
+        let currentSort = { column: null, direction: 'asc' };
+
+        // API Configuration
+        function toggleApiConfig() {
+            const config = document.getElementById('apiConfig');
+            config.classList.toggle('hidden');
+        }
+
+        function saveApiConfig() {
+            const token = document.getElementById('accessToken').value;
+            const accountId = document.getElementById('adAccountId').value;
+            const dateRange = document.getElementById('dateRange').value;
+
+            if (token && accountId) {
+                localStorage.setItem('metaAccessToken', token);
+                localStorage.setItem('metaAdAccountId', accountId);
+                localStorage.setItem('metaDateRange', dateRange);
+                alert('API configuration saved!');
+                toggleApiConfig();
+            } else {
+                alert('Please fill in all required fields');
+            }
+        }
+
+        function loadApiConfig() {
+            const token = localStorage.getItem('metaAccessToken');
+            const accountId = localStorage.getItem('metaAdAccountId');
+            const dateRange = localStorage.getItem('metaDateRange') || '30';
+
+            if (token) document.getElementById('accessToken').value = token;
+            if (accountId) document.getElementById('adAccountId').value = accountId;
+            if (dateRange) document.getElementById('dateRange').value = dateRange;
+        }
+
+        // Fetch Ads from Meta API
+        async function fetchAds() {
+            const token = localStorage.getItem('metaAccessToken');
+            const accountId = localStorage.getItem('metaAdAccountId');
+            const dateRange = parseInt(localStorage.getItem('metaDateRange') || '30');
+
+            if (!token || !accountId) {
+                alert('Please configure API settings first');
+                toggleApiConfig();
+                return;
+            }
+
+            const loading = showLoading();
+
+            try {
+                const today = new Date();
+                const startDate = new Date(today.getTime() - dateRange * 24 * 60 * 60 * 1000);
+                const dateFormat = (date) => date.toISOString().split('T')[0];
+
+                // Fetch ads with insights
+                const fields = [
+                    'id', 'name', 'status', 'created_time', 'creative',
+                    'insights.time_range({since:' + dateFormat(startDate) + ',until:' + dateFormat(today) + '}){' +
+                    'clicks,impressions,spend,cpc,ctr,frequency,actions,action_values,cost_per_action_type}'
+                ].join(',');
+
+                const url = `https://graph.facebook.com/v18.0/${accountId}/ads?fields=${fields}&access_token=${token}&limit=100`;
+
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                // Transform API data to our format
+                adsData = data.data.map((ad, index) => {
+                    const insights = ad.insights?.data?.[0] || {};
+                    const purchases = insights.actions?.find(a => a.action_type === 'purchase')?.value || 0;
+                    const purchaseValue = insights.action_values?.find(a => a.action_type === 'purchase')?.value || 0;
+                    const spend = parseFloat(insights.spend || 0);
+                    const roas = spend > 0 ? (parseFloat(purchaseValue) / spend) : 0;
+
+                    return {
+                        creativeId: ad.id,
+                        author: extractAuthor(ad.name),
+                        landingPage: extractLandingPage(ad.creative),
+                        decision: classifyDecision(roas, parseFloat(insights.ctr || 0)),
+                        hypothesis: extractHypothesis(ad.name),
+                        format: ad.creative?.object_type === 'VIDEO' ? 'Video' : 'Image',
+                        avatar: extractAvatar(ad.name),
+                        angle: extractAngle(ad.name),
+                        ctr: parseFloat(insights.ctr || 0),
+                        cpc: parseFloat(insights.cpc || 0),
+                        spend: spend,
+                        roas: roas,
+                        frequency: parseFloat(insights.frequency || 0),
+                        purchases: parseInt(purchases),
+                        learnings: ''
+                    };
+                });
+
+                hideLoading();
+                renderTable();
+                updateStats();
+                populateFilters();
+
+            } catch (error) {
+                hideLoading();
+                alert('Error fetching ads: ' + error.message);
+                console.error(error);
+            }
+        }
+
+        // Helper functions to extract data from ad names
+        function extractAuthor(name) {
+            const match = name.match(/\[([^\]]+)\]/);
+            return match ? match[1] : 'Unknown';
+        }
+
+        function extractHypothesis(name) {
+            const match = name.match(/Hyp:([^|]+)/i);
+            return match ? match[1].trim() : '';
+        }
+
+        function extractAvatar(name) {
+            const match = name.match(/Avatar:([^|]+)/i);
+            return match ? match[1].trim() : 'General';
+        }
+
+        function extractAngle(name) {
+            const match = name.match(/Angle:([^|]+)/i);
+            return match ? match[1].trim() : '';
+        }
+
+        function extractLandingPage(creative) {
+            if (!creative) return '';
+            return creative.object_story_spec?.link_data?.link || '';
+        }
+
+        function classifyDecision(roas, ctr) {
+            if (roas >= 3.0 && ctr >= 1.5) return 'Winner';
+            if (roas >= 1.5 || ctr >= 1.0) return 'Launched';
+            return 'Killed';
+        }
+
+        // Load sample data
+        function loadSampleData() {
+            adsData = [
+                {
+                    creativeId: 'AD001',
+                    author: 'John Smith',
+                    landingPage: 'https://example.com/product-a',
+                    decision: 'Winner',
+                    hypothesis: 'Pain point messaging resonates with target audience',
+                    format: 'Video',
+                    avatar: 'Fitness Enthusiast',
+                    angle: 'Transformation Story',
+                    ctr: 2.45,
+                    cpc: 0.85,
+                    spend: 1250.00,
+                    roas: 4.2,
+                    frequency: 2.1,
+                    purchases: 47,
+                    learnings: 'Emotional hooks perform best. Focus on before/after.'
+                },
+                {
+                    creativeId: 'AD002',
+                    author: 'Sarah Johnson',
+                    landingPage: 'https://example.com/product-b',
+                    decision: 'Launched',
+                    hypothesis: 'Social proof increases conversions',
+                    format: 'Image',
+                    avatar: 'Budget Shopper',
+                    angle: 'Customer Reviews',
+                    ctr: 1.82,
+                    cpc: 1.20,
+                    spend: 890.50,
+                    roas: 2.8,
+                    frequency: 1.8,
+                    purchases: 28,
+                    learnings: 'Review screenshots work well. Need more testimonials.'
+                },
+                {
+                    creativeId: 'AD003',
+                    author: 'Mike Chen',
+                    landingPage: 'https://example.com/product-c',
+                    decision: 'Killed',
+                    hypothesis: 'Feature-focused messaging drives clicks',
+                    format: 'Video',
+                    avatar: 'Tech Savvy',
+                    angle: 'Product Features',
+                    ctr: 0.65,
+                    cpc: 2.50,
+                    spend: 450.00,
+                    roas: 0.8,
+                    frequency: 3.2,
+                    purchases: 5,
+                    learnings: 'Too technical. Need emotional angle instead.'
+                },
+                {
+                    creativeId: 'AD004',
+                    author: 'Emily Davis',
+                    landingPage: 'https://example.com/product-a',
+                    decision: 'Winner',
+                    hypothesis: 'Urgency and scarcity drive immediate action',
+                    format: 'Image',
+                    avatar: 'Fitness Enthusiast',
+                    angle: 'Limited Time Offer',
+                    ctr: 3.15,
+                    cpc: 0.65,
+                    spend: 2100.00,
+                    roas: 5.6,
+                    frequency: 1.5,
+                    purchases: 89,
+                    learnings: 'Countdown timers are highly effective. Repeat this pattern.'
+                },
+                {
+                    creativeId: 'AD005',
+                    author: 'John Smith',
+                    landingPage: 'https://example.com/product-d',
+                    decision: 'Launched',
+                    hypothesis: 'Celebrity endorsement builds trust',
+                    format: 'Video',
+                    avatar: 'Luxury Buyer',
+                    angle: 'Influencer Partnership',
+                    ctr: 1.95,
+                    cpc: 1.80,
+                    spend: 3200.00,
+                    roas: 2.2,
+                    frequency: 2.5,
+                    purchases: 52,
+                    learnings: 'Influencer choice matters. Need higher engagement influencers.'
+                },
+                {
+                    creativeId: 'AD006',
+                    author: 'Sarah Johnson',
+                    landingPage: 'https://example.com/product-b',
+                    decision: 'Winner',
+                    hypothesis: 'Problem-solution framework is clear and compelling',
+                    format: 'Image',
+                    avatar: 'Budget Shopper',
+                    angle: 'Problem-Solution',
+                    ctr: 2.80,
+                    cpc: 0.95,
+                    spend: 1680.00,
+                    roas: 4.8,
+                    frequency: 1.9,
+                    purchases: 72,
+                    learnings: 'Clear problem statement hooks audience. Simple solution messaging.'
+                },
+                {
+                    creativeId: 'AD007',
+                    author: 'Mike Chen',
+                    landingPage: 'https://example.com/product-e',
+                    decision: 'Killed',
+                    hypothesis: 'Humor makes brand memorable',
+                    format: 'Video',
+                    avatar: 'Young Professional',
+                    angle: 'Comedic Approach',
+                    ctr: 0.45,
+                    cpc: 3.20,
+                    spend: 620.00,
+                    roas: 0.4,
+                    frequency: 4.1,
+                    purchases: 3,
+                    learnings: 'Humor didn\'t translate. Audience wants serious solutions.'
+                },
+                {
+                    creativeId: 'AD008',
+                    author: 'Emily Davis',
+                    landingPage: 'https://example.com/product-a',
+                    decision: 'Launched',
+                    hypothesis: 'Educational content positions us as experts',
+                    format: 'Video',
+                    avatar: 'Fitness Enthusiast',
+                    angle: 'How-To Guide',
+                    ctr: 1.55,
+                    cpc: 1.45,
+                    spend: 980.00,
+                    roas: 2.1,
+                    frequency: 2.2,
+                    purchases: 31,
+                    learnings: 'Educational works but needs stronger CTA at the end.'
+                },
+                {
+                    creativeId: 'AD009',
+                    author: 'John Smith',
+                    landingPage: 'https://example.com/product-f',
+                    decision: 'Winner',
+                    hypothesis: 'User-generated content builds authenticity',
+                    format: 'Image',
+                    avatar: 'Social Shopper',
+                    angle: 'UGC Compilation',
+                    ctr: 2.90,
+                    cpc: 0.75,
+                    spend: 1540.00,
+                    roas: 5.1,
+                    frequency: 1.7,
+                    purchases: 68,
+                    learnings: 'Authentic UGC outperforms polished ads. More of this!'
+                },
+                {
+                    creativeId: 'AD010',
+                    author: 'Sarah Johnson',
+                    landingPage: 'https://example.com/product-b',
+                    decision: 'Killed',
+                    hypothesis: 'Multiple products in one ad increases options',
+                    format: 'Image',
+                    avatar: 'Budget Shopper',
+                    angle: 'Product Catalog',
+                    ctr: 0.55,
+                    cpc: 2.85,
+                    spend: 720.00,
+                    roas: 0.9,
+                    frequency: 3.8,
+                    purchases: 8,
+                    learnings: 'Too many options create confusion. Single product focus works better.'
+                }
+            ];
+
+            renderTable();
+            updateStats();
+            populateFilters();
+        }
+
+        // Render table
+        function renderTable() {
+            const tbody = document.getElementById('adsTableBody');
+            const table = document.getElementById('adsTable');
+            const emptyState = document.getElementById('emptyState');
+
+            if (adsData.length === 0) {
+                table.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            table.style.display = 'table';
+            emptyState.style.display = 'none';
+
+            filteredData = [...adsData];
+            applyFilters();
+        }
+
+        function renderRows() {
+            const tbody = document.getElementById('adsTableBody');
+            tbody.innerHTML = '';
+
+            filteredData.forEach((ad, index) => {
+                const row = document.createElement('tr');
+                row.className = ad.decision.toLowerCase();
+
+                row.innerHTML = `
+                    <td>${ad.creativeId}</td>
+                    <td>${ad.author}</td>
+                    <td class="link-cell"><a href="${ad.landingPage}" target="_blank">${ad.landingPage}</a></td>
+                    <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
+                    <td>${ad.hypothesis}</td>
+                    <td><span class="format-badge">${ad.format}</span></td>
+                    <td>${ad.avatar}</td>
+                    <td>${ad.angle}</td>
+                    <td class="metric ${ad.ctr >= 2.0 ? 'metric-good' : ad.ctr < 1.0 ? 'metric-bad' : ''}">${ad.ctr.toFixed(2)}</td>
+                    <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
+                    <td class="metric">${ad.spend.toFixed(2)}</td>
+                    <td class="metric ${ad.roas >= 3.0 ? 'metric-good' : ad.roas < 1.5 ? 'metric-bad' : ''}">${ad.roas.toFixed(2)}</td>
+                    <td class="metric">${ad.frequency.toFixed(2)}</td>
+                    <td class="metric">${ad.purchases}</td>
+                    <td><textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)">${ad.learnings}</textarea></td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Update learnings
+        function updateLearnings(index, value) {
+            const originalIndex = adsData.findIndex(ad => ad.creativeId === filteredData[index].creativeId);
+            adsData[originalIndex].learnings = value;
+            filteredData[index].learnings = value;
+        }
+
+        // Sorting
+        function sortTable(column) {
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+
+            filteredData.sort((a, b) => {
+                let aVal = a[column];
+                let bVal = b[column];
+
+                // Handle numeric sorting
+                if (typeof aVal === 'number' && typeof bVal === 'number') {
+                    return currentSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+
+                // Handle string sorting
+                aVal = String(aVal).toLowerCase();
+                bVal = String(bVal).toLowerCase();
+
+                if (currentSort.direction === 'asc') {
+                    return aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
+                } else {
+                    return aVal > bVal ? -1 : aVal < bVal ? 1 : 0;
+                }
+            });
+
+            updateSortIndicators();
+            renderRows();
+        }
+
+        function updateSortIndicators() {
+            document.querySelectorAll('th.sortable').forEach(th => {
+                th.classList.remove('sorted-asc', 'sorted-desc');
+            });
+
+            if (currentSort.column) {
+                const thIndex = ['creativeId', 'author', 'landingPage', 'decision', 'hypothesis', 'format', 'avatar', 'angle', 'ctr', 'cpc', 'spend', 'roas', 'frequency', 'purchases'].indexOf(currentSort.column);
+                const th = document.querySelectorAll('th.sortable')[thIndex];
+                if (th) {
+                    th.classList.add(currentSort.direction === 'asc' ? 'sorted-asc' : 'sorted-desc');
+                }
+            }
+        }
+
+        // Filtering
+        function populateFilters() {
+            // Authors
+            const authors = [...new Set(adsData.map(ad => ad.author))].sort();
+            const authorSelect = document.getElementById('filterAuthor');
+            authorSelect.innerHTML = '<option value="">All Authors</option>';
+            authors.forEach(author => {
+                authorSelect.innerHTML += `<option value="${author}">${author}</option>`;
+            });
+
+            // Avatars
+            const avatars = [...new Set(adsData.map(ad => ad.avatar))].sort();
+            const avatarSelect = document.getElementById('filterAvatar');
+            avatarSelect.innerHTML = '<option value="">All Avatars</option>';
+            avatars.forEach(avatar => {
+                avatarSelect.innerHTML += `<option value="${avatar}">${avatar}</option>`;
+            });
+        }
+
+        function applyFilters() {
+            const decision = document.getElementById('filterDecision').value;
+            const author = document.getElementById('filterAuthor').value;
+            const avatar = document.getElementById('filterAvatar').value;
+            const format = document.getElementById('filterFormat').value;
+
+            filteredData = adsData.filter(ad => {
+                if (decision && ad.decision !== decision) return false;
+                if (author && ad.author !== author) return false;
+                if (avatar && ad.avatar !== avatar) return false;
+                if (format && ad.format !== format) return false;
+                return true;
+            });
+
+            renderRows();
+            updateStats();
+        }
+
+        function clearFilters() {
+            document.getElementById('filterDecision').value = '';
+            document.getElementById('filterAuthor').value = '';
+            document.getElementById('filterAvatar').value = '';
+            document.getElementById('filterFormat').value = '';
+            applyFilters();
+        }
+
+        // Statistics
+        function updateStats() {
+            const total = filteredData.length;
+            const winners = filteredData.filter(ad => ad.decision === 'Winner').length;
+            const avgRoas = total > 0 ? filteredData.reduce((sum, ad) => sum + ad.roas, 0) / total : 0;
+            const totalSpend = filteredData.reduce((sum, ad) => sum + ad.spend, 0);
+            const avgCtr = total > 0 ? filteredData.reduce((sum, ad) => sum + ad.ctr, 0) / total : 0;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statWinners').textContent = winners;
+            document.getElementById('statRoas').textContent = avgRoas.toFixed(2);
+            document.getElementById('statSpend').textContent = '$' + totalSpend.toFixed(2);
+            document.getElementById('statCtr').textContent = avgCtr.toFixed(2) + '%';
+        }
+
+        // AI Analysis
+        function analyzeAds() {
+            if (adsData.length === 0) {
+                alert('No data to analyze. Please load ads first.');
+                return;
+            }
+
+            const insights = generateInsights();
+            displayInsights(insights);
+        }
+
+        function generateInsights() {
+            const insights = {
+                avatarAngle: [],
+                hypotheses: [],
+                formats: [],
+                authors: []
+            };
+
+            // Analyze Avatar + Angle combinations
+            const avatarAngleMap = {};
+            adsData.forEach(ad => {
+                const key = `${ad.avatar} + ${ad.angle}`;
+                if (!avatarAngleMap[key]) {
+                    avatarAngleMap[key] = { count: 0, totalRoas: 0, totalCtr: 0, winners: 0 };
+                }
+                avatarAngleMap[key].count++;
+                avatarAngleMap[key].totalRoas += ad.roas;
+                avatarAngleMap[key].totalCtr += ad.ctr;
+                if (ad.decision === 'Winner') avatarAngleMap[key].winners++;
+            });
+
+            insights.avatarAngle = Object.entries(avatarAngleMap)
+                .map(([combo, data]) => ({
+                    combo,
+                    avgRoas: data.totalRoas / data.count,
+                    avgCtr: data.totalCtr / data.count,
+                    winRate: (data.winners / data.count) * 100
+                }))
+                .sort((a, b) => b.avgRoas - a.avgRoas)
+                .slice(0, 5);
+
+            // Analyze Hypotheses
+            const hypothesisMap = {};
+            adsData.forEach(ad => {
+                if (!ad.hypothesis) return;
+                if (!hypothesisMap[ad.hypothesis]) {
+                    hypothesisMap[ad.hypothesis] = { count: 0, totalRoas: 0, winners: 0 };
+                }
+                hypothesisMap[ad.hypothesis].count++;
+                hypothesisMap[ad.hypothesis].totalRoas += ad.roas;
+                if (ad.decision === 'Winner') hypothesisMap[ad.hypothesis].winners++;
+            });
+
+            insights.hypotheses = Object.entries(hypothesisMap)
+                .map(([hypothesis, data]) => ({
+                    hypothesis,
+                    avgRoas: data.totalRoas / data.count,
+                    winRate: (data.winners / data.count) * 100
+                }))
+                .sort((a, b) => b.avgRoas - a.avgRoas)
+                .slice(0, 5);
+
+            // Analyze Formats
+            const formatStats = { Video: [], Image: [] };
+            adsData.forEach(ad => {
+                formatStats[ad.format].push(ad);
+            });
+
+            insights.formats = Object.entries(formatStats).map(([format, ads]) => {
+                const avgRoas = ads.reduce((sum, ad) => sum + ad.roas, 0) / ads.length;
+                const avgCtr = ads.reduce((sum, ad) => sum + ad.ctr, 0) / ads.length;
+                const winRate = (ads.filter(ad => ad.decision === 'Winner').length / ads.length) * 100;
+                return { format, avgRoas, avgCtr, winRate, count: ads.length };
+            }).sort((a, b) => b.avgRoas - a.avgRoas);
+
+            // Analyze Authors
+            const authorMap = {};
+            adsData.forEach(ad => {
+                if (!authorMap[ad.author]) {
+                    authorMap[ad.author] = { count: 0, totalRoas: 0, winners: 0 };
+                }
+                authorMap[ad.author].count++;
+                authorMap[ad.author].totalRoas += ad.roas;
+                if (ad.decision === 'Winner') authorMap[ad.author].winners++;
+            });
+
+            insights.authors = Object.entries(authorMap)
+                .map(([author, data]) => ({
+                    author,
+                    avgRoas: data.totalRoas / data.count,
+                    winRate: (data.winners / data.count) * 100,
+                    count: data.count
+                }))
+                .sort((a, b) => b.avgRoas - a.avgRoas);
+
+            return insights;
+        }
+
+        function displayInsights(insights) {
+            const grid = document.getElementById('insightsGrid');
+            grid.innerHTML = '';
+
+            // Avatar + Angle Combinations
+            const avatarCard = document.createElement('div');
+            avatarCard.className = 'insight-card';
+            avatarCard.innerHTML = `
+                <h3>Top Avatar + Angle Combinations</h3>
+                <ul class="insight-list">
+                    ${insights.avatarAngle.map(item => `
+                        <li>
+                            <strong>${item.combo}</strong><br>
+                            ROAS: ${item.avgRoas.toFixed(2)} | CTR: ${item.avgCtr.toFixed(2)}% | Win Rate: ${item.winRate.toFixed(0)}%
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            grid.appendChild(avatarCard);
+
+            // Hypotheses
+            const hypothesisCard = document.createElement('div');
+            hypothesisCard.className = 'insight-card';
+            hypothesisCard.innerHTML = `
+                <h3>Best Performing Hypotheses</h3>
+                <ul class="insight-list">
+                    ${insights.hypotheses.map(item => `
+                        <li>
+                            <strong>"${item.hypothesis}"</strong><br>
+                            Avg ROAS: ${item.avgRoas.toFixed(2)} | Win Rate: ${item.winRate.toFixed(0)}%
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            grid.appendChild(hypothesisCard);
+
+            // Formats
+            const formatCard = document.createElement('div');
+            formatCard.className = 'insight-card';
+            formatCard.innerHTML = `
+                <h3>Format Performance</h3>
+                <ul class="insight-list">
+                    ${insights.formats.map(item => `
+                        <li>
+                            <strong>${item.format}</strong> (${item.count} ads)<br>
+                            Avg ROAS: ${item.avgRoas.toFixed(2)} | Avg CTR: ${item.avgCtr.toFixed(2)}% | Win Rate: ${item.winRate.toFixed(0)}%
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            grid.appendChild(formatCard);
+
+            // Authors
+            const authorCard = document.createElement('div');
+            authorCard.className = 'insight-card';
+            authorCard.innerHTML = `
+                <h3>Top Performing Authors</h3>
+                <ul class="insight-list">
+                    ${insights.authors.map(item => `
+                        <li>
+                            <strong>${item.author}</strong> (${item.count} ads)<br>
+                            Avg ROAS: ${item.avgRoas.toFixed(2)} | Win Rate: ${item.winRate.toFixed(0)}%
+                        </li>
+                    `).join('')}
+                </ul>
+            `;
+            grid.appendChild(authorCard);
+
+            // Learnings from Winners
+            const winners = adsData.filter(ad => ad.decision === 'Winner' && ad.learnings);
+            if (winners.length > 0) {
+                const learningsCard = document.createElement('div');
+                learningsCard.className = 'insight-card';
+                learningsCard.innerHTML = `
+                    <h3>Key Learnings from Winners</h3>
+                    <ul class="insight-list">
+                        ${winners.slice(0, 5).map(ad => `
+                            <li>
+                                <strong>${ad.creativeId}</strong> (ROAS: ${ad.roas.toFixed(2)})<br>
+                                ${ad.learnings}
+                            </li>
+                        `).join('')}
+                    </ul>
+                `;
+                grid.appendChild(learningsCard);
+            }
+
+            document.getElementById('analysisSection').classList.remove('hidden');
+        }
+
+        function hideAnalysis() {
+            document.getElementById('analysisSection').classList.add('hidden');
+        }
+
+        // Export to Excel
+        function exportToExcel() {
+            if (adsData.length === 0) {
+                alert('No data to export');
+                return;
+            }
+
+            // Create CSV content
+            const headers = [
+                'Creative ID', 'Author', 'Landing Page', 'Decision', 'Hypothesis',
+                'Format', 'Avatar', 'Angle/Hook', 'CTR (%)', 'CPC ($)', 'Spend ($)',
+                'ROAS', 'Frequency', 'Purchases', 'Learnings'
+            ];
+
+            const csvContent = [
+                headers.join(','),
+                ...adsData.map(ad => [
+                    ad.creativeId,
+                    `"${ad.author}"`,
+                    `"${ad.landingPage}"`,
+                    ad.decision,
+                    `"${ad.hypothesis}"`,
+                    ad.format,
+                    `"${ad.avatar}"`,
+                    `"${ad.angle}"`,
+                    ad.ctr.toFixed(2),
+                    ad.cpc.toFixed(2),
+                    ad.spend.toFixed(2),
+                    ad.roas.toFixed(2),
+                    ad.frequency.toFixed(2),
+                    ad.purchases,
+                    `"${ad.learnings.replace(/"/g, '""')}"`
+                ].join(','))
+            ].join('\n');
+
+            // Download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', `meta-ads-export-${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Loading states
+        function showLoading() {
+            const tbody = document.getElementById('adsTableBody');
+            tbody.innerHTML = '<tr><td colspan="15" class="loading">Loading ads from Meta API</td></tr>';
+            document.getElementById('adsTable').style.display = 'table';
+            document.getElementById('emptyState').style.display = 'none';
+        }
+
+        function hideLoading() {
+            // Will be handled by renderTable
+        }
+
+        // Initialize
+        window.addEventListener('DOMContentLoaded', () => {
+            loadApiConfig();
+        });
+    </script>
+</body>
+</html>
