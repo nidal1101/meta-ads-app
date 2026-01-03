@@ -37,20 +37,30 @@ Automatically identifies:
 
 ### 1. Get Meta API Credentials
 
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create an app or use an existing one
-3. Get your **Access Token** from the Graph API Explorer
-4. Find your **Ad Account ID** (format: `act_123456789`)
+#### Get Access Token:
+1. Go to [Meta Graph API Explorer](https://developers.facebook.com/tools/explorer/)
+2. Select your app (or create a new app at developers.facebook.com)
+3. Click **"Generate Access Token"**
+4. In permissions, make sure to grant **"ads_read"** permission
+5. Copy the generated access token (starts with "EAAA...")
+6. **Note**: Tokens expire! For testing use short-lived tokens, for production use long-lived tokens
+
+#### Find Ad Account ID:
+1. Go to [Meta Business Settings](https://business.facebook.com/settings/ad-accounts)
+2. Click on your ad account
+3. Your Account ID is shown at the top (format: `123456789` or `act_123456789`)
+4. You can enter it with or without the `act_` prefix
 
 ### 2. Configure the Analyzer
 
 1. Open `meta-ads-analyzer.html` in your web browser
 2. Click **"⚙️ API Config"**
 3. Enter your:
-   - Access Token
-   - Ad Account ID
+   - Access Token (with ads_read permission)
+   - Ad Account ID (with or without `act_` prefix)
    - Date Range (default: 30 days)
-4. Click **"Save Config"**
+4. Click **"Test Connection"** to verify your credentials work
+5. If test succeeds, click **"Save Config"**
 
 ### 3. Load Your Ads
 
@@ -145,21 +155,72 @@ Works best in modern browsers:
 
 ## Troubleshooting
 
-### "Error fetching ads"
-- Verify your Access Token is valid and not expired
-- Check your Ad Account ID format (should start with `act_`)
-- Ensure you have permissions to read ads from the account
-- Check browser console for detailed error messages
+### Common Issues
 
-### No data showing
-- Confirm you have ads running in the selected date range
-- Try increasing the date range in API Config
-- Use "Load Sample Data" to verify the tool is working
+#### "Object does not exist, cannot be loaded due to missing permissions"
 
-### Export not working
+This is the most common error. Here's how to fix it:
+
+1. **Verify Account ID**:
+   - Go to business.facebook.com/settings/ad-accounts
+   - Make sure you're copying the numeric ID (e.g., `123456789`)
+   - The app will automatically add `act_` prefix if needed
+
+2. **Check Access Token Permissions**:
+   - Your token MUST have `ads_read` permission
+   - Go to developers.facebook.com/tools/explorer/
+   - Click "Generate Access Token"
+   - In the permission dialog, search for "ads_read" and enable it
+   - Generate a new token with this permission
+
+3. **Verify Account Access**:
+   - You must be an Admin or Advertiser on the ad account
+   - Check at business.facebook.com/settings/ad-accounts
+   - Click your ad account and verify your role under "People"
+
+4. **Use Test Connection**:
+   - Click "Test Connection" button in API Config
+   - This will tell you exactly what's wrong
+
+#### "Access token is invalid or expired"
+
+- Access tokens from Graph API Explorer expire quickly (1-2 hours)
+- Generate a new token at developers.facebook.com/tools/explorer/
+- For longer-lasting tokens, look into "Extended Access Tokens" (60 days)
+
+#### "No ads found"
+
+- Your account might not have any ads in the selected date range
+- Try increasing the date range to 60-90 days
+- Make sure you're using an Ad Account that has run campaigns
+- Check that ads exist in Meta Ads Manager
+
+#### Browser Console Errors
+
+Open Developer Tools (F12) and check the Console tab for detailed errors:
+- Network tab shows the actual API requests and responses
+- Look for error codes:
+  - `190`: Token invalid/expired
+  - `17`: Rate limit (wait a few minutes)
+  - `100`: Invalid parameter
+  - `200`: Permissions error
+
+### Other Issues
+
+#### Export not working
 - Check browser's download permissions
 - Try a different browser
 - Ensure pop-ups are not blocked
+
+#### Slow loading
+- The app fetches insights for each ad individually
+- Limited to 50 ads to avoid rate limits
+- This may take 10-30 seconds
+
+#### CORS errors
+- Meta API should allow cross-origin requests
+- If you see CORS errors, try a different browser
+- Chrome/Edge work best
 
 ## Support
 

@@ -439,18 +439,19 @@
 
         <div class="api-config hidden" id="apiConfig">
             <div class="control-group">
-                <label>Access Token</label>
-                <input type="password" id="accessToken" placeholder="Your Meta Access Token" style="min-width: 300px;">
+                <label>Access Token <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="font-size: 10px; color: #3b82f6;">(Get Token)</a></label>
+                <input type="password" id="accessToken" placeholder="Your Meta Access Token (needs ads_read permission)" style="min-width: 300px;">
             </div>
             <div class="control-group">
-                <label>Ad Account ID</label>
-                <input type="text" id="adAccountId" placeholder="act_123456789">
+                <label>Ad Account ID <a href="https://business.facebook.com/settings/ad-accounts" target="_blank" style="font-size: 10px; color: #3b82f6;">(Find ID)</a></label>
+                <input type="text" id="adAccountId" placeholder="act_123456789 or just 123456789">
             </div>
             <div class="control-group">
                 <label>Date Range (days)</label>
                 <input type="number" id="dateRange" value="30" min="1" max="90">
             </div>
             <button class="btn btn-primary" onclick="saveApiConfig()">Save Config</button>
+            <button class="btn btn-secondary" onclick="testApiConnection()" style="margin-left: 10px;">Test Connection</button>
         </div>
 
         <div class="controls">
@@ -587,10 +588,46 @@
             if (dateRange) document.getElementById('dateRange').value = dateRange;
         }
 
+        async function testApiConnection() {
+            let token = document.getElementById('accessToken').value;
+            let accountId = document.getElementById('adAccountId').value;
+
+            if (!token || !accountId) {
+                alert('Please enter both Access Token and Ad Account ID');
+                return;
+            }
+
+            // Normalize account ID
+            accountId = accountId.trim();
+            if (!accountId.startsWith('act_')) {
+                accountId = 'act_' + accountId;
+            }
+
+            try {
+                const testUrl = `https://graph.facebook.com/v21.0/${accountId}?fields=id,name,account_status,currency&access_token=${token}`;
+                const response = await fetch(testUrl);
+                const data = await response.json();
+
+                if (data.error) {
+                    let errorMsg = data.error.message;
+                    if (data.error.code === 190) {
+                        errorMsg = 'Access token is invalid or expired.\n\nSteps to get a new token:\n1. Go to developers.facebook.com/tools/explorer/\n2. Select your app (or create one)\n3. Click "Generate Access Token"\n4. Grant "ads_read" permission\n5. Copy the token';
+                    } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
+                        errorMsg = `Cannot access account "${accountId}".\n\nPlease check:\n1. Account ID is correct (find it at business.facebook.com/settings/ad-accounts)\n2. Token has "ads_read" permission\n3. You're an admin/advertiser on this account`;
+                    }
+                    alert('❌ Connection Failed\n\n' + errorMsg);
+                } else {
+                    alert(`✅ Connection Successful!\n\nAccount: ${data.name}\nID: ${data.id}\nCurrency: ${data.currency}\nStatus: ${data.account_status === 1 ? 'Active' : 'Inactive'}\n\nYou can now fetch ads!`);
+                }
+            } catch (error) {
+                alert('❌ Connection Failed\n\n' + error.message);
+            }
+        }
+
         // Fetch Ads from Meta API
         async function fetchAds() {
-            const token = localStorage.getItem('metaAccessToken');
-            const accountId = localStorage.getItem('metaAdAccountId');
+            let token = localStorage.getItem('metaAccessToken');
+            let accountId = localStorage.getItem('metaAdAccountId');
             const dateRange = parseInt(localStorage.getItem('metaDateRange') || '30');
 
             if (!token || !accountId) {
@@ -599,44 +636,106 @@
                 return;
             }
 
-            const loading = showLoading();
+            // Normalize account ID format
+            accountId = accountId.trim();
+            if (!accountId.startsWith('act_')) {
+                accountId = 'act_' + accountId;
+            }
+
+            showLoading();
 
             try {
                 const today = new Date();
                 const startDate = new Date(today.getTime() - dateRange * 24 * 60 * 60 * 1000);
                 const dateFormat = (date) => date.toISOString().split('T')[0];
+                const since = dateFormat(startDate);
+                const until = dateFormat(today);
 
-                // Fetch ads with insights
-                const fields = [
-                    'id', 'name', 'status', 'created_time', 'creative',
-                    'insights.time_range({since:' + dateFormat(startDate) + ',until:' + dateFormat(today) + '}){' +
-                    'clicks,impressions,spend,cpc,ctr,frequency,actions,action_values,cost_per_action_type}'
-                ].join(',');
+                console.log('Fetching ads from account:', accountId);
+                console.log('Date range:', since, 'to', until);
 
-                const url = `https://graph.facebook.com/v18.0/${accountId}/ads?fields=${fields}&access_token=${token}&limit=100`;
+                // Step 1: Fetch basic ad data first
+                const basicFields = 'id,name,status,effective_status,created_time,creative{id,name,object_type,object_story_spec,image_url,video_id}';
+                const adsUrl = `https://graph.facebook.com/v21.0/${accountId}/ads?fields=${basicFields}&limit=100&access_token=${token}`;
 
-                const response = await fetch(url);
-                const data = await response.json();
+                console.log('Fetching ads...');
+                const adsResponse = await fetch(adsUrl);
+                const adsData_raw = await adsResponse.json();
 
-                if (data.error) {
-                    throw new Error(data.error.message);
+                if (adsData_raw.error) {
+                    // Provide helpful error messages
+                    let errorMsg = adsData_raw.error.message;
+                    if (adsData_raw.error.code === 190) {
+                        errorMsg = 'Access token is invalid or expired. Please get a new token from Meta Business Manager.';
+                    } else if (adsData_raw.error.code === 17) {
+                        errorMsg = 'API rate limit reached. Please wait a few minutes and try again.';
+                    } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
+                        errorMsg = `Cannot access account "${accountId}". Please verify:\n\n` +
+                                   `1. Account ID is correct (find it in Meta Ads Manager URL)\n` +
+                                   `2. Your access token has "ads_read" permission\n` +
+                                   `3. You have access to this ad account\n\n` +
+                                   `Original error: ${errorMsg}`;
+                    }
+                    throw new Error(errorMsg);
                 }
 
+                if (!adsData_raw.data || adsData_raw.data.length === 0) {
+                    alert('No ads found in this account for the selected date range. Try increasing the date range or check if you have active ads.');
+                    hideLoading();
+                    return;
+                }
+
+                console.log(`Found ${adsData_raw.data.length} ads, fetching insights...`);
+
+                // Step 2: Fetch insights for each ad
+                const adsWithInsights = await Promise.all(
+                    adsData_raw.data.slice(0, 50).map(async (ad) => { // Limit to 50 to avoid rate limits
+                        try {
+                            const insightsFields = 'clicks,impressions,spend,cpc,ctr,frequency,actions,action_values';
+                            const insightsUrl = `https://graph.facebook.com/v21.0/${ad.id}/insights?fields=${insightsFields}&time_range={'since':'${since}','until':'${until}'}&access_token=${token}`;
+
+                            const insightsResponse = await fetch(insightsUrl);
+                            const insightsData = await insightsResponse.json();
+
+                            return {
+                                ...ad,
+                                insights: insightsData.data?.[0] || null
+                            };
+                        } catch (err) {
+                            console.warn(`Could not fetch insights for ad ${ad.id}:`, err);
+                            return {
+                                ...ad,
+                                insights: null
+                            };
+                        }
+                    })
+                );
+
                 // Transform API data to our format
-                adsData = data.data.map((ad, index) => {
-                    const insights = ad.insights?.data?.[0] || {};
-                    const purchases = insights.actions?.find(a => a.action_type === 'purchase')?.value || 0;
-                    const purchaseValue = insights.action_values?.find(a => a.action_type === 'purchase')?.value || 0;
+                adsData = adsWithInsights.map((ad, index) => {
+                    const insights = ad.insights || {};
+                    const purchases = insights.actions?.find(a => a.action_type === 'purchase' || a.action_type === 'omni_purchase')?.value || 0;
+                    const purchaseValue = insights.action_values?.find(a => a.action_type === 'purchase' || a.action_type === 'omni_purchase')?.value || 0;
                     const spend = parseFloat(insights.spend || 0);
                     const roas = spend > 0 ? (parseFloat(purchaseValue) / spend) : 0;
+
+                    // Extract creative details
+                    let landingPage = '';
+                    let format = 'Image';
+
+                    if (ad.creative) {
+                        format = ad.creative.object_type === 'VIDEO' ? 'Video' : 'Image';
+                        landingPage = ad.creative.object_story_spec?.link_data?.link ||
+                                     ad.creative.object_story_spec?.video_data?.link || '';
+                    }
 
                     return {
                         creativeId: ad.id,
                         author: extractAuthor(ad.name),
-                        landingPage: extractLandingPage(ad.creative),
+                        landingPage: landingPage,
                         decision: classifyDecision(roas, parseFloat(insights.ctr || 0)),
                         hypothesis: extractHypothesis(ad.name),
-                        format: ad.creative?.object_type === 'VIDEO' ? 'Video' : 'Image',
+                        format: format,
                         avatar: extractAvatar(ad.name),
                         angle: extractAngle(ad.name),
                         ctr: parseFloat(insights.ctr || 0),
@@ -650,14 +749,20 @@
                 });
 
                 hideLoading();
-                renderTable();
-                updateStats();
-                populateFilters();
+
+                if (adsData.length > 0) {
+                    renderTable();
+                    updateStats();
+                    populateFilters();
+                    alert(`Successfully loaded ${adsData.length} ads!`);
+                } else {
+                    alert('Ads were found but no data could be loaded. This may be a permissions issue.');
+                }
 
             } catch (error) {
                 hideLoading();
                 alert('Error fetching ads: ' + error.message);
-                console.error(error);
+                console.error('Full error:', error);
             }
         }
 
