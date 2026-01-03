@@ -599,23 +599,44 @@
 
             // Normalize account ID
             accountId = accountId.trim();
+            const originalId = accountId;
             if (!accountId.startsWith('act_')) {
                 accountId = 'act_' + accountId;
             }
 
             try {
+                // First, try as ad account
+                console.log('Testing ad account:', accountId);
                 const testUrl = `https://graph.facebook.com/v21.0/${accountId}?fields=id,name,account_status,currency&access_token=${token}`;
                 const response = await fetch(testUrl);
                 const data = await response.json();
 
                 if (data.error) {
-                    let errorMsg = data.error.message;
-                    if (data.error.code === 190) {
-                        errorMsg = 'Access token is invalid or expired.\n\nSteps to get a new token:\n1. Go to developers.facebook.com/tools/explorer/\n2. Select your app (or create one)\n3. Click "Generate Access Token"\n4. Grant "ads_read" permission\n5. Copy the token';
-                    } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
-                        errorMsg = `Cannot access account "${accountId}".\n\nPlease check:\n1. Account ID is correct (find it at business.facebook.com/settings/ad-accounts)\n2. Token has "ads_read" permission\n3. You're an admin/advertiser on this account`;
+                    // Failed as ad account - try to find ad accounts from this business/user
+                    console.log('Ad account test failed, checking if this is a business ID...');
+
+                    // Try getting ad accounts from "me" (user's accessible accounts)
+                    const meUrl = `https://graph.facebook.com/v21.0/me/adaccounts?fields=id,name,account_status&access_token=${token}`;
+                    const meResponse = await fetch(meUrl);
+                    const meData = await meResponse.json();
+
+                    if (meData.data && meData.data.length > 0) {
+                        let accountsList = 'Found your ad accounts:\n\n';
+                        meData.data.forEach((acc, idx) => {
+                            accountsList += `${idx + 1}. ${acc.name}\n   ID: ${acc.id}\n\n`;
+                        });
+                        accountsList += `\nThe ID you entered (${originalId}) is NOT an ad account ID.\n\nPlease copy one of the IDs above and try again.`;
+                        alert('❌ Wrong ID Type\n\n' + accountsList);
+                    } else {
+                        // Provide detailed error
+                        let errorMsg = data.error.message;
+                        if (data.error.code === 190) {
+                            errorMsg = 'Access token is invalid or expired.\n\nSteps to get a new token:\n1. Go to developers.facebook.com/tools/explorer/\n2. Select your app (or create one)\n3. Click "Generate Access Token"\n4. Grant "ads_read" permission\n5. Copy the token';
+                        } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
+                            errorMsg = `Cannot access account "${accountId}".\n\nThis might be:\n• Wrong ID (use Ad Account ID from Ads Manager URL: act=XXXXX)\n• Business/Page ID instead of Ad Account ID\n• No permission to access this account\n\nHow to find your Ad Account ID:\n1. Go to adsmanager.facebook.com\n2. Look at the URL for act=XXXXX\n3. Copy the numbers after act=`;
+                        }
+                        alert('❌ Connection Failed\n\n' + errorMsg);
                     }
-                    alert('❌ Connection Failed\n\n' + errorMsg);
                 } else {
                     alert(`✅ Connection Successful!\n\nAccount: ${data.name}\nID: ${data.id}\nCurrency: ${data.currency}\nStatus: ${data.account_status === 1 ? 'Active' : 'Inactive'}\n\nYou can now fetch ads!`);
                 }
