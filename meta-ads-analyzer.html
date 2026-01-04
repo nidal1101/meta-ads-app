@@ -544,6 +544,7 @@
                 <thead>
                     <tr>
                         <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
+                        <th class="sortable" onclick="sortTable('batchNumber')">Batch #</th>
                         <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
                         <th class="sortable" onclick="sortTable('campaignName')">Campaign</th>
                         <th class="sortable" onclick="sortTable('author')">Author</th>
@@ -762,22 +763,25 @@
                     const lines = text.split('\n');
                     const headers = lines[0].split(/,|\t/).map(h => h.trim().replace(/"/g, ''));
 
-                    // Find column indices for all tracker fields
+                    // Find column indices for all tracker fields (supporting both simple and detailed tracker formats)
                     const columnMap = {
                         creative: headers.findIndex(h => h.toLowerCase().includes('creative')),
+                        batch: headers.findIndex(h => h.toLowerCase().includes('batch') && h.includes('#')),
                         author: headers.findIndex(h => h.toLowerCase().includes('author')),
                         lp: headers.findIndex(h => h.toLowerCase() === 'lp' || h.toLowerCase().includes('landing')),
                         decision: headers.findIndex(h => h.toLowerCase().includes('decision')),
+                        status: headers.findIndex(h => h.toLowerCase() === 'status'),
                         hypothesis: headers.findIndex(h => h.toLowerCase().includes('hypothesis') || h.toLowerCase().includes('hyp')),
-                        format: headers.findIndex(h => h.toLowerCase().includes('format')),
+                        adConcept: headers.findIndex(h => h.toLowerCase().includes('concept') || h.toLowerCase().includes('messaging')),
+                        format: headers.findIndex(h => h.toLowerCase().includes('format') || (h.toLowerCase().includes('ad') && h.toLowerCase().includes('type'))),
                         avatar: headers.findIndex(h => h.toLowerCase().includes('avatar')),
                         angle: headers.findIndex(h => h.toLowerCase().includes('angle') || h.toLowerCase().includes('hook')),
-                        learnings: headers.findIndex(h => h.toLowerCase().includes('learning'))
+                        learnings: headers.findIndex(h => h.toLowerCase().includes('learning') || h.toLowerCase().includes('insights after'))
                     };
 
-                    // Check if we found the creative ID column
-                    if (columnMap.creative === -1) {
-                        alert('Could not find "CREATIVE" or "Creative ID" column in file');
+                    // Need at least Creative ID or BATCH # to match
+                    if (columnMap.creative === -1 && columnMap.batch === -1) {
+                        alert('Could not find "CREATIVE"/"Creative ID" or "BATCH #" column in file.\nPlease ensure your tracker has one of these columns for matching.');
                         return;
                     }
 
@@ -797,12 +801,20 @@
                         if (!lines[i].trim()) continue;
 
                         const values = lines[i].split(/,|\t/).map(v => v.trim().replace(/"/g, ''));
-                        const creativeId = values[columnMap.creative];
+                        const creativeId = columnMap.creative >= 0 ? values[columnMap.creative] : null;
+                        const batchNum = columnMap.batch >= 0 ? values[columnMap.batch]?.replace(/BATCH\s*#?\s*/i, '').toUpperCase() : null;
 
-                        if (!creativeId) continue;
+                        if (!creativeId && !batchNum) continue;
 
-                        // Find matching ad in current data
-                        const adIndex = adsData.findIndex(ad => ad.creativeId === creativeId);
+                        // Find matching ad in current data (try Creative ID first, then BATCH #)
+                        let adIndex = -1;
+                        if (creativeId) {
+                            adIndex = adsData.findIndex(ad => ad.creativeId === creativeId);
+                        }
+                        if (adIndex === -1 && batchNum) {
+                            adIndex = adsData.findIndex(ad => ad.batchNumber === batchNum);
+                        }
+
                         if (adIndex >= 0) {
                             // Import all available fields
                             if (columnMap.author >= 0 && values[columnMap.author]) {
@@ -817,8 +829,12 @@
                                 adsData[adIndex].decision = values[columnMap.decision];
                                 updatedFields.decision++;
                             }
+                            // Use Ad Concept/Messaging as hypothesis if hypothesis column not found
                             if (columnMap.hypothesis >= 0 && values[columnMap.hypothesis]) {
                                 adsData[adIndex].hypothesis = values[columnMap.hypothesis];
+                                updatedFields.hypothesis++;
+                            } else if (columnMap.adConcept >= 0 && values[columnMap.adConcept]) {
+                                adsData[adIndex].hypothesis = values[columnMap.adConcept];
                                 updatedFields.hypothesis++;
                             }
                             if (columnMap.format >= 0 && values[columnMap.format]) {
@@ -994,6 +1010,7 @@
 
                     return {
                         creativeId: ad.id,
+                        batchNumber: extractBatchNumber(ad.name),
                         adsetName: ad.adset?.name || 'Unknown',
                         campaignName: ad.campaign?.name || 'Unknown',
                         author: extractAuthor(ad.name),
@@ -1032,6 +1049,12 @@
         }
 
         // Helper functions to extract data from ad names
+        function extractBatchNumber(name) {
+            // Match patterns like "BATCH#023", "BATCH #023", "#023", "Batch#023A.1", etc.
+            const match = name.match(/(?:BATCH\s*#?\s*|#)(\d+[A-Z]?(?:\.\d+)?)/i);
+            return match ? match[1].toUpperCase() : '';
+        }
+
         function extractAuthor(name) {
             const match = name.match(/\[([^\]]+)\]/);
             return match ? match[1] : 'Unknown';
@@ -1068,6 +1091,7 @@
             adsData = [
                 {
                     creativeId: 'AD001',
+                    batchNumber: '023',
                     adsetName: 'Fitness Transformation - 25-40',
                     campaignName: 'Q4 Fitness Campaign',
                     author: 'John Smith',
@@ -1087,6 +1111,9 @@
                 },
                 {
                     creativeId: 'AD002',
+                    batchNumber: '024',
+                    adsetName: 'Social Proof Test',
+                    campaignName: 'Q4 Fitness Campaign',
                     author: 'Sarah Johnson',
                     landingPage: 'https://example.com/product-b',
                     decision: 'Launched',
@@ -1104,6 +1131,9 @@
                 },
                 {
                     creativeId: 'AD003',
+                    batchNumber: '025',
+                    adsetName: 'Feature Test',
+                    campaignName: 'Q4 Fitness Campaign',
                     author: 'Mike Chen',
                     landingPage: 'https://example.com/product-c',
                     decision: 'Killed',
@@ -1121,6 +1151,9 @@
                 },
                 {
                     creativeId: 'AD004',
+                    batchNumber: '026',
+                    adsetName: 'UGC Test',
+                    campaignName: 'Q4 Fitness Campaign',
                     author: 'Emily Davis',
                     landingPage: 'https://example.com/product-a',
                     decision: 'Winner',
@@ -1274,6 +1307,7 @@
 
                 row.innerHTML = `
                     <td>${ad.creativeId}</td>
+                    <td><span class="format-badge" style="background: #6366f1;">${ad.batchNumber || '-'}</span></td>
                     <td>${ad.adsetName || 'Unknown'}</td>
                     <td>${ad.campaignName || 'Unknown'}</td>
                     <td>${ad.author}</td>
@@ -1612,7 +1646,7 @@
 
             // Create CSV content
             const headers = [
-                'Creative ID', 'Author', 'Landing Page', 'Decision', 'Hypothesis',
+                'Creative ID', 'BATCH #', 'Ad Set Name', 'Campaign', 'Author', 'Landing Page', 'Decision', 'Hypothesis',
                 'Format', 'Avatar', 'Angle/Hook', 'CTR (%)', 'CPC ($)', 'Spend ($)',
                 'ROAS', 'Frequency', 'Purchases', 'Learnings'
             ];
@@ -1621,6 +1655,9 @@
                 headers.join(','),
                 ...adsData.map(ad => [
                     ad.creativeId,
+                    ad.batchNumber || '',
+                    `"${ad.adsetName || ''}"`,
+                    `"${ad.campaignName || ''}"`,
                     `"${ad.author}"`,
                     `"${ad.landingPage}"`,
                     ad.decision,
