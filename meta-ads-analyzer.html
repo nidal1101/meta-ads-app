@@ -711,6 +711,97 @@
         thead .fixed-column {
             z-index: 3;
         }
+
+        /* Kill Switch Toggle */
+        .kill-switch {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #EF4444;
+            transition: 0.3s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #10B981;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .status-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .status-label.on {
+            color: #34D399;
+        }
+
+        .status-label.off {
+            color: #FCA5A5;
+        }
+
+        /* Hypothesis input */
+        .hypothesis-input {
+            width: 100%;
+            min-height: 40px;
+            padding: 8px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #CBD5E1;
+            font-size: 12px;
+            font-family: inherit;
+            resize: vertical;
+        }
+
+        .hypothesis-input:focus {
+            outline: none;
+            border-color: #6366F1;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .hypothesis-input::placeholder {
+            color: #64748B;
+        }
     </style>
 </head>
 <body>
@@ -846,25 +937,36 @@
                 <p>Click "Fetch Ads" to load data from Meta API or use sample data</p>
                 <button class="btn btn-primary" onclick="loadSampleData()" style="margin-top: 20px;">Load Sample Data</button>
             </div>
-            <table id="adsTable" style="display: none;">
-                <thead>
-                    <tr>
-                        <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
-                        <th class="sortable" onclick="sortTable('variation')">Variation</th>
-                        <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
-                        <th class="sortable" onclick="sortTable('author')">Author</th>
-                        <th class="sortable" onclick="sortTable('decision')">Decision</th>
-                        <th class="sortable" onclick="sortTable('ctr')">CTR (%)</th>
-                        <th class="sortable" onclick="sortTable('cpc')">CPC ($)</th>
-                        <th class="sortable" onclick="sortTable('spend')">Spend ($)</th>
-                        <th class="sortable" onclick="sortTable('roas')">ROAS</th>
-                        <th>Actions</th>
-                        <th style="min-width: 350px;">Learnings & AI</th>
-                    </tr>
-                </thead>
-                <tbody id="adsTableBody">
-                </tbody>
-            </table>
+            <div class="table-wrapper">
+                <table id="adsTable" style="display: none;">
+                    <thead>
+                        <tr>
+                            <th class="fixed-column col-adset sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
+                            <th class="fixed-column col-lp sortable" onclick="sortTable('landingPage')">LP</th>
+                            <th class="sortable" onclick="sortTable('variation')">Variation</th>
+                            <th style="min-width: 200px;">Hypothesis</th>
+                            <th class="sortable" onclick="sortTable('author')">Author</th>
+                            <th class="sortable" onclick="sortTable('decision')">Decision</th>
+                            <th class="sortable" onclick="sortTable('spend')">Amount Spent</th>
+                            <th class="sortable" onclick="sortTable('linkClicks')">Link Clicks</th>
+                            <th class="sortable" onclick="sortTable('cpc')">CPC</th>
+                            <th class="sortable" onclick="sortTable('ctr')">CTR %</th>
+                            <th class="sortable" onclick="sortTable('cpm')">CPM</th>
+                            <th class="sortable" onclick="sortTable('hookRate')">Hook Rate %</th>
+                            <th class="sortable" onclick="sortTable('holdRate')">Hold Rate %</th>
+                            <th class="sortable" onclick="sortTable('frequency')">Frequency</th>
+                            <th class="sortable" onclick="sortTable('pur')">PUR</th>
+                            <th class="sortable" onclick="sortTable('roas')">Purchase ROAS</th>
+                            <th class="sortable" onclick="sortTable('cvr')">CVR %</th>
+                            <th class="sortable" onclick="sortTable('atcRatio')">ATC Ratio</th>
+                            <th style="min-width: 100px;">Status</th>
+                            <th class="fixed-column col-learnings" style="min-width: 350px;">Learnings & AI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adsTableBody">
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         <div class="analysis-section hidden" id="analysisSection">
@@ -1323,34 +1425,59 @@
                     }
 
                     // Extract batch number, variation, and merge with tracker data
+                    const adsetName = ad.adset?.name || 'Unknown';
                     const batchNumber = extractBatchNumber(ad.name);
-                    const variation = extractVariation(ad.adset?.name || ad.name);
+                    const variation = extractVariation(adsetName);
+                    const author = extractAuthor(adsetName);
+                    const landingPageName = extractLandingPageName(adsetName);
                     const trackerInfo = trackerData[batchNumber] || {};
 
                     // Build base ad object
                     const ctrVal = parseFloat(insights.ctr || 0);
                     const cpcVal = parseFloat(insights.cpc || 0);
+                    const cpmVal = parseFloat(insights.cpm || 0);
+                    const linkClicksVal = parseInt(insights.inline_link_clicks || 0);
+
+                    // Video engagement metrics
+                    const videoActions = insights.video_p25_watched_actions || [];
+                    const videoViews = insights.video_30_sec_watched_actions || [];
+                    const hookRate = videoActions.length > 0 ? parseFloat(videoActions[0].value) : 0;
+                    const holdRate = videoViews.length > 0 ? parseFloat(videoViews[0].value) : 0;
+
+                    // Conversion metrics
+                    const impressions = parseFloat(insights.impressions || 1);
+                    const cvr = purchases > 0 ? (purchases / impressions) * 100 : 0;
+                    const atcActions = insights.actions?.find(a => a.action_type === 'add_to_cart')?.value || 0;
+                    const atcRatio = purchases > 0 ? (parseInt(atcActions) / purchases) : 0;
 
                     const adData = {
                         creativeId: ad.id,
                         adsetId: ad.adset?.id || null,
+                        status: ad.adset?.effective_status || 'UNKNOWN',
                         batchNumber: batchNumber,
                         variation: variation,
-                        adsetName: ad.adset?.name || 'Unknown',
+                        adsetName: adsetName,
                         campaignName: ad.campaign?.name || 'Unknown',
-                        author: trackerInfo.author || extractAuthor(ad.name),
+                        author: trackerInfo.author || author,
                         landingPage: landingPage,
+                        landingPageName: trackerInfo.landingPageName || landingPageName,
                         decision: trackerInfo.decision || classifyDecision(roas, ctrVal),
-                        hypothesis: trackerInfo.hypothesis || extractHypothesis(ad.name),
+                        hypothesis: trackerInfo.hypothesis || '',
                         format: format,
                         avatar: trackerInfo.avatar || extractAvatar(ad.name),
                         angle: trackerInfo.angle || extractAngle(ad.name),
                         ctr: ctrVal,
                         cpc: cpcVal,
+                        cpm: cpmVal,
                         spend: spend,
                         roas: roas,
+                        linkClicks: linkClicksVal,
+                        hookRate: hookRate,
+                        holdRate: holdRate,
                         frequency: parseFloat(insights.frequency || 0),
                         purchases: parseInt(purchases),
+                        cvr: cvr,
+                        atcRatio: atcRatio,
                         learnings: trackerInfo.learnings || '',
                         aiInsights: generateAIInsights(spend, roas, ctrVal, cpcVal)
                     };
@@ -1750,12 +1877,14 @@
                 {
                     creativeId: 'AD001',
                     adsetId: '23851234567890',
+                    status: 'ACTIVE',
                     batchNumber: '023',
-                    variation: '172A',
-                    adsetName: 'Fitness Transformation - 25-40',
+                    variation: '172',
+                    adsetName: 'listicle1 | 172 | Nidal',
                     campaignName: 'Q4 Fitness Campaign',
                     author: 'Nidal',
-                    landingPage: 'https://example.com/product-a',
+                    landingPage: 'https://example.com/listicle1',
+                    landingPageName: 'listicle1',
                     decision: 'Winner',
                     hypothesis: 'Pain point messaging resonates with target audience',
                     format: 'Video',
@@ -1763,22 +1892,30 @@
                     angle: 'Emotional hook + before/after',
                     ctr: 2.45,
                     cpc: 0.85,
+                    cpm: 12.50,
                     spend: 102.00,
                     roas: 4.2,
+                    linkClicks: 120,
+                    hookRate: 45.5,
+                    holdRate: 28.3,
                     frequency: 2.1,
                     purchases: 8,
+                    cvr: 2.1,
+                    atcRatio: 1.8,
                     learnings: 'Emotional hooks perform best. Focus on before/after.',
                     aiInsights: generateAIInsights(102, 4.2, 2.45, 0.85)
                 },
                 {
                     creativeId: 'AD002',
                     adsetId: '23851234567891',
+                    status: 'ACTIVE',
                     batchNumber: '024',
-                    variation: '172B',
-                    adsetName: 'Social Proof Test',
+                    variation: '262',
+                    adsetName: 'US | 18+ Broad | 262Pc Survival Kit | Roman',
                     campaignName: 'Q4 Fitness Campaign',
                     author: 'Roman',
-                    landingPage: 'https://example.com/product-b',
+                    landingPage: 'https://example.com/survival-kit',
+                    landingPageName: 'US',
                     decision: 'Launched',
                     hypothesis: 'Social proof increases conversions',
                     format: 'Image',
@@ -1786,22 +1923,30 @@
                     angle: 'Customer Reviews',
                     ctr: 1.82,
                     cpc: 1.20,
+                    cpm: 18.40,
                     spend: 118.50,
                     roas: 2.8,
+                    linkClicks: 98,
+                    hookRate: 0,
+                    holdRate: 0,
                     frequency: 1.8,
                     purchases: 3,
+                    cvr: 1.5,
+                    atcRatio: 1.2,
                     learnings: 'Review screenshots work well. Need more testimonials.',
                     aiInsights: generateAIInsights(118.50, 2.8, 1.82, 1.20)
                 },
                 {
                     creativeId: 'AD003',
                     adsetId: '23851234567892',
+                    status: 'PAUSED',
                     batchNumber: '025',
-                    variation: '172C',
-                    adsetName: 'Feature Test',
+                    variation: '173',
+                    adsetName: 'listicle2 | 173 | Gary',
                     campaignName: 'Q4 Fitness Campaign',
                     author: 'Gary',
-                    landingPage: 'https://example.com/product-c',
+                    landingPage: 'https://example.com/listicle2',
+                    landingPageName: 'listicle2',
                     decision: 'Killed',
                     hypothesis: 'Feature-focused messaging drives clicks',
                     format: 'Video',
@@ -1809,10 +1954,16 @@
                     angle: 'Product Features',
                     ctr: 0.65,
                     cpc: 2.50,
+                    cpm: 25.00,
                     spend: 220.00,
                     roas: 0.8,
+                    linkClicks: 88,
+                    hookRate: 32.1,
+                    holdRate: 18.5,
                     frequency: 3.2,
                     purchases: 1,
+                    cvr: 0.5,
+                    atcRatio: 0.8,
                     learnings: 'Too technical. Need emotional angle instead.',
                     aiInsights: generateAIInsights(220, 0.8, 0.65, 2.50)
                 },
@@ -1989,40 +2140,113 @@
                     variationHtml = '<span style="color: #64748B;">—</span>';
                 }
 
+                // Kill switch HTML
+                const isActive = ad.status === 'ACTIVE';
+                const statusLabel = isActive ? 'ON' : 'OFF';
+                const statusClass = isActive ? 'on' : 'off';
+
+                // LP hyperlink
+                const lpName = ad.landingPageName || extractLandingPageName(ad.adsetName);
+                const lpLink = ad.landingPage || '#';
+                const lpHtml = lpName ? `<a href="${lpLink}" target="_blank" style="color: #A5B4FC; text-decoration: none;">${lpName}</a>` : '—';
+
                 row.innerHTML = `
-                    <td>${ad.creativeId}</td>
+                    <td class="fixed-column col-adset">${ad.adsetName || 'Unknown'}</td>
+                    <td class="fixed-column col-lp">${lpHtml}</td>
                     <td>${variationHtml}</td>
-                    <td>${ad.adsetName || 'Unknown'}</td>
+                    <td><textarea class="hypothesis-input" data-index="${index}" onchange="updateHypothesis(${index}, this.value)" placeholder="Enter hypothesis...">${ad.hypothesis || ''}</textarea></td>
                     <td>${ad.author}</td>
                     <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
-                    <td class="metric ${ad.ctr >= 2.0 ? 'metric-good' : ad.ctr < 1.0 ? 'metric-bad' : ''}">${ad.ctr.toFixed(2)}</td>
-                    <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
                     <td class="metric">${ad.spend.toFixed(2)}</td>
+                    <td class="metric">${ad.linkClicks || 0}</td>
+                    <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
+                    <td class="metric ${ad.ctr >= 2.0 ? 'metric-good' : ad.ctr < 1.0 ? 'metric-bad' : ''}">${ad.ctr.toFixed(2)}</td>
+                    <td class="metric">${ad.cpm ? ad.cpm.toFixed(2) : '—'}</td>
+                    <td class="metric">${ad.hookRate ? ad.hookRate.toFixed(2) : '—'}</td>
+                    <td class="metric">${ad.holdRate ? ad.holdRate.toFixed(2) : '—'}</td>
+                    <td class="metric">${ad.frequency.toFixed(2)}</td>
+                    <td class="metric">${ad.purchases || 0}</td>
                     <td class="metric ${ad.roas >= 3.0 ? 'metric-good' : ad.roas < 1.5 ? 'metric-bad' : ''}">${ad.roas.toFixed(2)}</td>
+                    <td class="metric">${ad.cvr ? ad.cvr.toFixed(2) : '—'}</td>
+                    <td class="metric">${ad.atcRatio ? ad.atcRatio.toFixed(2) : '—'}</td>
                     <td>
-                        <div class="action-buttons">
-                            <button class="btn btn-sm btn-warning" onclick="pauseAdset('${ad.adsetId}', '${ad.adsetName}')" title="Pause this adset">
-                                Pause
-                            </button>
-                            <button class="btn btn-sm btn-danger" onclick="killAdset('${ad.adsetId}', '${ad.adsetName}')" title="Archive this adset">
-                                Kill
-                            </button>
+                        <div class="kill-switch">
+                            <label class="switch">
+                                <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleAdsetStatus('${ad.adsetId}', '${ad.adsetName}', this.checked)">
+                                <span class="slider"></span>
+                            </label>
+                            <span class="status-label ${statusClass}">${statusLabel}</span>
                         </div>
                     </td>
-                    <td style="padding: 16px;">
+                    <td class="fixed-column col-learnings" style="padding: 16px;">
                         <div style="margin-bottom: 12px;">
                             <div style="font-weight: 700; color: #A5B4FC; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Your Learnings</div>
-                            <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" placeholder="Enter insights..." style="min-height: 60px;">${ad.learnings}</textarea>
+                            <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" placeholder="Enter insights..." style="min-height: 50px; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.08);">${ad.learnings}</textarea>
                         </div>
                         <div>
                             <div style="font-weight: 700; color: #34D399; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">AI Analysis</div>
-                            <div style="font-size: 12px; color: #CBD5E1; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border-left: 3px solid #10B981; line-height: 1.6;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
+                            <div style="font-size: 11px; color: #CBD5E1; padding: 10px; background: rgba(16, 185, 129, 0.08); border-radius: 6px; border-left: 2px solid #10B981; line-height: 1.5;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
                         </div>
                     </td>
                 `;
 
                 tbody.appendChild(row);
             });
+        }
+
+        // Toggle adset status (kill switch)
+        async function toggleAdsetStatus(adsetId, adsetName, isActive) {
+            if (!adsetId) {
+                alert('No adset ID available');
+                return;
+            }
+
+            const action = isActive ? 'ACTIVE' : 'PAUSED';
+            const accessToken = document.getElementById('accessToken').value;
+
+            if (!accessToken) {
+                alert('Please configure your API access token first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://graph.facebook.com/v18.0/${adsetId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: action,
+                        access_token: accessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to update adset status: ${response.statusText}`);
+                }
+
+                // Update local data
+                const ad = adsData.find(a => a.adsetId === adsetId);
+                if (ad) {
+                    ad.status = action;
+                }
+
+                console.log(`Successfully set ${adsetName} to ${action}`);
+            } catch (error) {
+                alert(`Error updating adset: ${error.message}`);
+                console.error('Toggle error:', error);
+                // Revert the switch
+                location.reload();
+            }
+        }
+
+        // Update hypothesis
+        function updateHypothesis(index, value) {
+            const originalIndex = adsData.findIndex(ad => ad.creativeId === filteredData[index].creativeId);
+            if (originalIndex !== -1) {
+                adsData[originalIndex].hypothesis = value;
+                filteredData[index].hypothesis = value;
+            }
         }
 
         // Update learnings
