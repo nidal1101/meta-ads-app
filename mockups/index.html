@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Ads Analyzer - Design Mockups</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 60px 40px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            font-weight: 800;
+            color: white;
+            margin-bottom: 16px;
+            text-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 20px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .mockups-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 40px;
+        }
+
+        .mockup-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .mockup-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4);
+        }
+
+        .mockup-preview {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+            background: #f5f5f5;
+        }
+
+        .mockup-preview iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            transform: scale(0.8);
+            transform-origin: top left;
+            width: 125%;
+            height: 125%;
+        }
+
+        .mockup-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.7) 100%);
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            padding: 30px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .mockup-card:hover .mockup-overlay {
+            opacity: 1;
+        }
+
+        .view-btn {
+            background: white;
+            color: #667eea;
+            padding: 12px 32px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .view-btn:hover {
+            background: #667eea;
+            color: white;
+            transform: scale(1.05);
+        }
+
+        .mockup-info {
+            padding: 32px;
+        }
+
+        .mockup-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .mockup-subtitle {
+            font-size: 14px;
+            color: #667eea;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 16px;
+        }
+
+        .mockup-description {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .features-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+
+        .feature-tag {
+            background: #f0f0f0;
+            color: #555;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .mockup-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .btn-primary {
+            flex: 1;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #667eea;
+            padding: 12px 24px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .btn-secondary:hover {
+            background: #f5f5ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎨 Design Mockups</h1>
+            <p>Choose your favorite design for the Meta Ads Analyzer</p>
+        </div>
+
+        <div class="mockups-grid">
+            <!-- Mockup 1: Shopify -->
+            <div class="mockup-card">
+                <div class="mockup-preview">
+                    <iframe src="mockup-1-shopify.html" scrolling="no"></iframe>
+                    <div class="mockup-overlay">
+                        <a href="mockup-1-shopify.html" target="_blank" class="view-btn">View Full Mockup →</a>
+                    </div>
+                </div>
+                <div class="mockup-info">
+                    <div class="mockup-subtitle">Option 1</div>
+                    <div class="mockup-title">Shopify-Inspired</div>
+                    <div class="mockup-description">
+                        Clean, professional design with purple accents. Lots of white space and card-based layouts. Perfect for a polished, trustworthy feel.
+                    </div>
+                    <div class="features-list">
+                        <span class="feature-tag">Light Theme</span>
+                        <span class="feature-tag">Purple Accents</span>
+                        <span class="feature-tag">Card-Based</span>
+                        <span class="feature-tag">Minimalist</span>
+                    </div>
+                    <div class="mockup-actions">
+                        <a href="mockup-1-shopify.html" target="_blank" class="btn-primary">View Full Preview</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 2: Stripe -->
+            <div class="mockup-card">
+                <div class="mockup-preview">
+                    <iframe src="mockup-2-stripe.html" scrolling="no"></iframe>
+                    <div class="mockup-overlay">
+                        <a href="mockup-2-stripe.html" target="_blank" class="view-btn">View Full Mockup →</a>
+                    </div>
+                </div>
+                <div class="mockup-info">
+                    <div class="mockup-subtitle">Option 2</div>
+                    <div class="mockup-title">Stripe-Inspired</div>
+                    <div class="mockup-description">
+                        Modern dark theme with blue/purple gradients. Technical and sophisticated with glassmorphism effects. Great for a premium, modern look.
+                    </div>
+                    <div class="features-list">
+                        <span class="feature-tag">Dark Theme</span>
+                        <span class="feature-tag">Gradients</span>
+                        <span class="feature-tag">Glassmorphism</span>
+                        <span class="feature-tag">Technical</span>
+                    </div>
+                    <div class="mockup-actions">
+                        <a href="mockup-2-stripe.html" target="_blank" class="btn-primary">View Full Preview</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 3: Linear -->
+            <div class="mockup-card">
+                <div class="mockup-preview">
+                    <iframe src="mockup-3-linear.html" scrolling="no"></iframe>
+                    <div class="mockup-overlay">
+                        <a href="mockup-3-linear.html" target="_blank" class="view-btn">View Full Mockup →</a>
+                    </div>
+                </div>
+                <div class="mockup-info">
+                    <div class="mockup-subtitle">Option 3</div>
+                    <div class="mockup-title">Linear-Inspired</div>
+                    <div class="mockup-description">
+                        Sleek dark mode with purple accents. Minimal borders, subtle shadows. Perfect for a focused, distraction-free workflow.
+                    </div>
+                    <div class="features-list">
+                        <span class="feature-tag">Dark Mode</span>
+                        <span class="feature-tag">Purple Accents</span>
+                        <span class="feature-tag">Sleek</span>
+                        <span class="feature-tag">Minimal</span>
+                    </div>
+                    <div class="mockup-actions">
+                        <a href="mockup-3-linear.html" target="_blank" class="btn-primary">View Full Preview</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 4: Notion -->
+            <div class="mockup-card">
+                <div class="mockup-preview">
+                    <iframe src="mockup-4-notion.html" scrolling="no"></iframe>
+                    <div class="mockup-overlay">
+                        <a href="mockup-4-notion.html" target="_blank" class="view-btn">View Full Mockup →</a>
+                    </div>
+                </div>
+                <div class="mockup-info">
+                    <div class="mockup-subtitle">Option 4</div>
+                    <div class="mockup-title">Notion-Inspired</div>
+                    <div class="mockup-description">
+                        Warm, friendly design with subtle grays. Clean typography and comfortable spacing. Ideal for a welcoming, productivity-focused tool.
+                    </div>
+                    <div class="features-list">
+                        <span class="feature-tag">Light Theme</span>
+                        <span class="feature-tag">Warm Grays</span>
+                        <span class="feature-tag">Friendly</span>
+                        <span class="feature-tag">Clean</span>
+                    </div>
+                    <div class="mockup-actions">
+                        <a href="mockup-4-notion.html" target="_blank" class="btn-primary">View Full Preview</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mockup 5: Vercel -->
+            <div class="mockup-card">
+                <div class="mockup-preview">
+                    <iframe src="mockup-5-vercel.html" scrolling="no"></iframe>
+                    <div class="mockup-overlay">
+                        <a href="mockup-5-vercel.html" target="_blank" class="view-btn">View Full Mockup →</a>
+                    </div>
+                </div>
+                <div class="mockup-info">
+                    <div class="mockup-subtitle">Option 5</div>
+                    <div class="mockup-title">Vercel-Inspired</div>
+                    <div class="mockup-description">
+                        Futuristic black theme with sharp gradients and bold colors. Cutting-edge design with animated elements. Perfect for a modern, high-tech aesthetic.
+                    </div>
+                    <div class="features-list">
+                        <span class="feature-tag">Black Theme</span>
+                        <span class="feature-tag">Bold Gradients</span>
+                        <span class="feature-tag">Futuristic</span>
+                        <span class="feature-tag">Animated</span>
+                    </div>
+                    <div class="mockup-actions">
+                        <a href="mockup-5-vercel.html" target="_blank" class="btn-primary">View Full Preview</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

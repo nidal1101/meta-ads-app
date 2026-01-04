@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mockup 3: Linear-Inspired - Meta Ads Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0D0E12;
+            color: #E6EDF3;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: #16171D;
+            border-bottom: 1px solid #272A33;
+            padding: 16px 32px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1600px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 18px;
+            font-weight: 600;
+            color: #E6EDF3;
+            letter-spacing: -0.5px;
+        }
+
+        .logo span {
+            color: #A371F7;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: inherit;
+        }
+
+        .btn-primary {
+            background: #A371F7;
+            color: #FFFFFF;
+        }
+
+        .btn-primary:hover {
+            background: #9060E8;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #C9D1D9;
+            border: 1px solid #30363D;
+        }
+
+        .btn-secondary:hover {
+            background: #21262D;
+            border-color: #8B949E;
+        }
+
+        .btn-success {
+            background: #2EA043;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #26893F;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px 32px;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #16171D;
+            border: 1px solid #272A33;
+            border-radius: 6px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            border-color: #A371F7;
+            box-shadow: 0 0 0 1px #A371F7;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #8B949E;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: #E6EDF3;
+        }
+
+        .stat-value.success {
+            color: #3FB950;
+        }
+
+        /* Filters */
+        .filters-section {
+            background: #16171D;
+            border: 1px solid #272A33;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 24px;
+        }
+
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+        }
+
+        .filter-group label {
+            display: block;
+            font-size: 12px;
+            font-weight: 500;
+            color: #C9D1D9;
+            margin-bottom: 8px;
+        }
+
+        .filter-group select {
+            width: 100%;
+            padding: 8px 12px;
+            background: #0D0E12;
+            border: 1px solid #30363D;
+            border-radius: 6px;
+            color: #E6EDF3;
+            font-size: 13px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+        }
+
+        .filter-group select:focus {
+            outline: none;
+            border-color: #A371F7;
+            box-shadow: 0 0 0 1px #A371F7;
+        }
+
+        /* Table */
+        .table-container {
+            background: #16171D;
+            border: 1px solid #272A33;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        thead {
+            background: #0D0E12;
+            border-bottom: 1px solid #272A33;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #8B949E;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #21262D;
+            font-size: 13px;
+            color: #E6EDF3;
+        }
+
+        tr:hover {
+            background: #0D0E12;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+
+        .badge-winner {
+            background: rgba(63, 185, 80, 0.15);
+            color: #3FB950;
+        }
+
+        .badge-launched {
+            background: rgba(163, 113, 247, 0.15);
+            color: #B392F0;
+        }
+
+        .badge-killed {
+            background: rgba(248, 81, 73, 0.15);
+            color: #F85149;
+        }
+
+        /* Metrics */
+        .metric-good {
+            color: #3FB950;
+            font-weight: 600;
+        }
+
+        .metric-bad {
+            color: #F85149;
+            font-weight: 600;
+        }
+
+        /* Learnings */
+        .learnings-cell {
+            max-width: 350px;
+        }
+
+        .learning-section {
+            margin-bottom: 12px;
+        }
+
+        .learning-label {
+            font-size: 10px;
+            font-weight: 600;
+            color: #8B949E;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 6px;
+        }
+
+        .learning-content {
+            font-size: 12px;
+            line-height: 1.5;
+            color: #C9D1D9;
+            background: #0D0E12;
+            padding: 10px;
+            border-radius: 4px;
+            border-left: 2px solid #A371F7;
+        }
+
+        .ai-insight {
+            border-left-color: #3FB950;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 8px;
+            background: #0D0E12;
+            border: 1px solid #30363D;
+            border-radius: 4px;
+            color: #E6EDF3;
+            font-family: inherit;
+            font-size: 12px;
+            resize: vertical;
+            min-height: 50px;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #A371F7;
+            box-shadow: 0 0 0 1px #A371F7;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">Meta<span>Analytics</span></div>
+            <div class="header-actions">
+                <button class="btn btn-secondary">⚙️ Settings</button>
+                <button class="btn btn-secondary">📂 Campaigns</button>
+                <button class="btn btn-primary">🔄 Fetch Ads</button>
+                <button class="btn btn-success">📊 Export</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Stats Bar -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-label">Total Ads</div>
+                <div class="stat-value">127</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Winners</div>
+                <div class="stat-value success">23</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg ROAS</div>
+                <div class="stat-value success">3.2x</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Total Spend</div>
+                <div class="stat-value">$12,450</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg CTR</div>
+                <div class="stat-value">2.1%</div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="filters-section">
+            <div class="filters-grid">
+                <div class="filter-group">
+                    <label>Decision</label>
+                    <select>
+                        <option>All Decisions</option>
+                        <option>Winner</option>
+                        <option>Launched</option>
+                        <option>Killed</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Author</label>
+                    <select>
+                        <option>All Authors</option>
+                        <option>Nidal</option>
+                        <option>Riley</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Avatar</label>
+                    <select>
+                        <option>All Avatars</option>
+                        <option>Family Protector</option>
+                        <option>Outdoor Enthusiast</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label>Format</label>
+                    <select>
+                        <option>All Formats</option>
+                        <option>Video</option>
+                        <option>Image</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Creative ID</th>
+                        <th>Author</th>
+                        <th>Decision</th>
+                        <th>Avatar</th>
+                        <th>CTR</th>
+                        <th>CPC</th>
+                        <th>ROAS</th>
+                        <th>Learnings & AI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AD001</td>
+                        <td>Nidal</td>
+                        <td><span class="badge badge-winner">Winner</span></td>
+                        <td>Family Protector</td>
+                        <td class="metric-good">2.45%</td>
+                        <td class="metric-good">$0.85</td>
+                        <td class="metric-good">4.2x</td>
+                        <td class="learnings-cell">
+                            <div class="learning-section">
+                                <div class="learning-label">📝 Your Learnings</div>
+                                <textarea>Emotional hooks perform best. Focus on before/after.</textarea>
+                            </div>
+                            <div class="learning-section">
+                                <div class="learning-label">🤖 AI Analysis</div>
+                                <div class="learning-content ai-insight">
+                                    🎯 Strong ROAS (4.20x) - Highly profitable. ✨ Excellent CTR (2.45%)
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>AD002</td>
+                        <td>Riley</td>
+                        <td><span class="badge badge-launched">Launched</span></td>
+                        <td>Outdoor Enthusiast</td>
+                        <td>1.82%</td>
+                        <td>$1.20</td>
+                        <td class="metric-good">2.8x</td>
+                        <td class="learnings-cell">
+                            <div class="learning-section">
+                                <div class="learning-label">📝 Your Learnings</div>
+                                <textarea>Review screenshots work well. Need more testimonials.</textarea>
+                            </div>
+                            <div class="learning-section">
+                                <div class="learning-label">🤖 AI Analysis</div>
+                                <div class="learning-content ai-insight">
+                                    📊 Moderate ROAS (2.80x) - Profitable but room for optimization.
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>AD003</td>
+                        <td>Nidal</td>
+                        <td><span class="badge badge-killed">Killed</span></td>
+                        <td>Tech Savvy</td>
+                        <td class="metric-bad">0.65%</td>
+                        <td class="metric-bad">$2.50</td>
+                        <td class="metric-bad">0.8x</td>
+                        <td class="learnings-cell">
+                            <div class="learning-section">
+                                <div class="learning-label">📝 Your Learnings</div>
+                                <textarea>Too technical. Need emotional angle instead.</textarea>
+                            </div>
+                            <div class="learning-section">
+                                <div class="learning-label">🤖 AI Analysis</div>
+                                <div class="learning-content ai-insight">
+                                    🛑 KILL SIGNAL: Both ROAS and CTR are poor. Move on.
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>
