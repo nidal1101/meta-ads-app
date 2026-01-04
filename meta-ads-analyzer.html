@@ -433,7 +433,7 @@
                 <button class="btn btn-secondary" onclick="toggleApiConfig()">⚙️ API Config</button>
                 <button class="btn btn-secondary" onclick="toggleCampaignSelector()">📂 Select Campaigns</button>
                 <button class="btn btn-primary" onclick="fetchAds()">🔄 Fetch Ads</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import Learnings</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import Tracker Data</button>
                 <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display:none" onchange="importLearnings(event)">
                 <button class="btn btn-analyze" onclick="analyzeAds()">🤖 AI Analysis</button>
                 <button class="btn btn-secondary" onclick="exportToExcel()">📊 Export Excel</button>
@@ -750,7 +750,7 @@
             renderCampaignList();
         }
 
-        // Import learnings from CSV
+        // Import tracker data from CSV
         async function importLearnings(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -760,34 +760,98 @@
                 try {
                     const text = e.target.result;
                     const lines = text.split('\n');
-                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+                    const headers = lines[0].split(/,|\t/).map(h => h.trim().replace(/"/g, ''));
 
-                    // Find column indices
-                    const idIndex = headers.findIndex(h => h.toLowerCase().includes('creative') && h.toLowerCase().includes('id'));
-                    const learningsIndex = headers.findIndex(h => h.toLowerCase().includes('learning'));
+                    // Find column indices for all tracker fields
+                    const columnMap = {
+                        creative: headers.findIndex(h => h.toLowerCase().includes('creative')),
+                        author: headers.findIndex(h => h.toLowerCase().includes('author')),
+                        lp: headers.findIndex(h => h.toLowerCase() === 'lp' || h.toLowerCase().includes('landing')),
+                        decision: headers.findIndex(h => h.toLowerCase().includes('decision')),
+                        hypothesis: headers.findIndex(h => h.toLowerCase().includes('hypothesis') || h.toLowerCase().includes('hyp')),
+                        format: headers.findIndex(h => h.toLowerCase().includes('format')),
+                        avatar: headers.findIndex(h => h.toLowerCase().includes('avatar')),
+                        angle: headers.findIndex(h => h.toLowerCase().includes('angle') || h.toLowerCase().includes('hook')),
+                        learnings: headers.findIndex(h => h.toLowerCase().includes('learning'))
+                    };
 
-                    if (idIndex === -1) {
-                        alert('Could not find "Creative ID" column in CSV');
+                    // Check if we found the creative ID column
+                    if (columnMap.creative === -1) {
+                        alert('Could not find "CREATIVE" or "Creative ID" column in file');
                         return;
                     }
 
                     let importedCount = 0;
+                    let updatedFields = {
+                        author: 0,
+                        landingPage: 0,
+                        decision: 0,
+                        hypothesis: 0,
+                        format: 0,
+                        avatar: 0,
+                        angle: 0,
+                        learnings: 0
+                    };
+
                     for (let i = 1; i < lines.length; i++) {
                         if (!lines[i].trim()) continue;
 
-                        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
-                        const creativeId = values[idIndex];
-                        const learnings = learningsIndex >= 0 ? values[learningsIndex] : '';
+                        const values = lines[i].split(/,|\t/).map(v => v.trim().replace(/"/g, ''));
+                        const creativeId = values[columnMap.creative];
+
+                        if (!creativeId) continue;
 
                         // Find matching ad in current data
                         const adIndex = adsData.findIndex(ad => ad.creativeId === creativeId);
-                        if (adIndex >= 0 && learnings) {
-                            adsData[adIndex].learnings = learnings;
+                        if (adIndex >= 0) {
+                            // Import all available fields
+                            if (columnMap.author >= 0 && values[columnMap.author]) {
+                                adsData[adIndex].author = values[columnMap.author];
+                                updatedFields.author++;
+                            }
+                            if (columnMap.lp >= 0 && values[columnMap.lp]) {
+                                adsData[adIndex].landingPage = values[columnMap.lp];
+                                updatedFields.landingPage++;
+                            }
+                            if (columnMap.decision >= 0 && values[columnMap.decision]) {
+                                adsData[adIndex].decision = values[columnMap.decision];
+                                updatedFields.decision++;
+                            }
+                            if (columnMap.hypothesis >= 0 && values[columnMap.hypothesis]) {
+                                adsData[adIndex].hypothesis = values[columnMap.hypothesis];
+                                updatedFields.hypothesis++;
+                            }
+                            if (columnMap.format >= 0 && values[columnMap.format]) {
+                                adsData[adIndex].format = values[columnMap.format];
+                                updatedFields.format++;
+                            }
+                            if (columnMap.avatar >= 0 && values[columnMap.avatar]) {
+                                adsData[adIndex].avatar = values[columnMap.avatar];
+                                updatedFields.avatar++;
+                            }
+                            if (columnMap.angle >= 0 && values[columnMap.angle]) {
+                                adsData[adIndex].angle = values[columnMap.angle];
+                                updatedFields.angle++;
+                            }
+                            if (columnMap.learnings >= 0 && values[columnMap.learnings]) {
+                                adsData[adIndex].learnings = values[columnMap.learnings];
+                                updatedFields.learnings++;
+                            }
                             importedCount++;
                         }
                     }
 
-                    alert(`Successfully imported learnings for ${importedCount} ads!`);
+                    const summary = `Successfully imported data for ${importedCount} ads!\n\nFields updated:\n` +
+                        `- Author: ${updatedFields.author}\n` +
+                        `- Landing Page: ${updatedFields.landingPage}\n` +
+                        `- Decision: ${updatedFields.decision}\n` +
+                        `- Hypothesis: ${updatedFields.hypothesis}\n` +
+                        `- Format: ${updatedFields.format}\n` +
+                        `- Avatar: ${updatedFields.avatar}\n` +
+                        `- Angle: ${updatedFields.angle}\n` +
+                        `- Learnings: ${updatedFields.learnings}`;
+
+                    alert(summary);
                     renderRows();
                 } catch (error) {
                     alert('Error importing file: ' + error.message);
