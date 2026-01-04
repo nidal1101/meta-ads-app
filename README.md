@@ -45,6 +45,18 @@ Automatically identifies:
 5. Copy the generated access token (starts with "EAAA...")
 6. **Note**: Tokens expire! For testing use short-lived tokens, for production use long-lived tokens
 
+#### CRITICAL: Connect App to Ad Account
+**If you're using a custom app, you MUST connect it to your ad account:**
+
+1. Go to [Business Settings - Ad Accounts](https://business.facebook.com/settings/ad-accounts)
+2. Click on your ad account
+3. Scroll down to **"Connected Assets"** or **"Assigned Assets"**
+4. Click **"Add Assets"** → **"Apps"**
+5. Select your app (e.g., "CreativesPRO") and add it
+6. Grant the app access to the ad account
+
+**Without this step, you'll get "does not exist, cannot be loaded due to missing permissions" even with correct token and permissions!**
+
 #### Find Ad Account ID:
 1. Go to [Meta Business Settings](https://business.facebook.com/settings/ad-accounts)
 2. Click on your ad account
@@ -161,24 +173,32 @@ Works best in modern browsers:
 
 This is the most common error. Here's how to fix it:
 
-1. **Verify Account ID**:
+1. **MOST COMMON: Connect App to Ad Account** ⚠️
+   - Go to business.facebook.com/settings/ad-accounts
+   - Click on your ad account
+   - Scroll to **"Connected Assets"** section
+   - Click **"Add Assets"** → **"Apps"**
+   - Select your app and grant it access
+   - **This is required even if you have correct token and permissions!**
+
+2. **Verify Account ID**:
    - Go to business.facebook.com/settings/ad-accounts
    - Make sure you're copying the numeric ID (e.g., `123456789`)
    - The app will automatically add `act_` prefix if needed
 
-2. **Check Access Token Permissions**:
+3. **Check Access Token Permissions**:
    - Your token MUST have `ads_read` permission
    - Go to developers.facebook.com/tools/explorer/
    - Click "Generate Access Token"
    - In the permission dialog, search for "ads_read" and enable it
    - Generate a new token with this permission
 
-3. **Verify Account Access**:
+4. **Verify Account Access**:
    - You must be an Admin or Advertiser on the ad account
    - Check at business.facebook.com/settings/ad-accounts
    - Click your ad account and verify your role under "People"
 
-4. **Use Test Connection**:
+5. **Use Test Connection**:
    - Click "Test Connection" button in API Config
    - This will tell you exactly what's wrong
 

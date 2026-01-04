@@ -633,7 +633,7 @@
                         if (data.error.code === 190) {
                             errorMsg = 'Access token is invalid or expired.\n\nSteps to get a new token:\n1. Go to developers.facebook.com/tools/explorer/\n2. Select your app (or create one)\n3. Click "Generate Access Token"\n4. Grant "ads_read" permission\n5. Copy the token';
                         } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
-                            errorMsg = `Cannot access account "${accountId}".\n\nThis might be:\n• Wrong ID (use Ad Account ID from Ads Manager URL: act=XXXXX)\n• Business/Page ID instead of Ad Account ID\n• No permission to access this account\n\nHow to find your Ad Account ID:\n1. Go to adsmanager.facebook.com\n2. Look at the URL for act=XXXXX\n3. Copy the numbers after act=`;
+                            errorMsg = `Cannot access account "${accountId}".\n\nMOST COMMON ISSUE:\n• Your app is not connected to this ad account!\n• Go to business.facebook.com/settings/ad-accounts\n• Click your account → "Connected Assets" → "Add Apps"\n• Add your app and grant access\n\nOther possible issues:\n• Wrong ID (use Ad Account ID from Ads Manager URL)\n• Business/Page ID instead of Ad Account ID\n• Not an admin/advertiser on this account`;
                         }
                         alert('❌ Connection Failed\n\n' + errorMsg);
                     }
