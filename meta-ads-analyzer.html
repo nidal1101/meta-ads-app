@@ -866,17 +866,18 @@
                 <label>Date Range</label>
                 <select id="dateRangeSelect" onchange="handleDateRangeChange()">
                     <option value="7">Last 7 Days</option>
+                    <option value="14">Last 14 Days</option>
                     <option value="30" selected>Last 30 Days</option>
                     <option value="60">Last 60 Days</option>
                     <option value="90">Last 90 Days</option>
                     <option value="custom">Custom Range</option>
                 </select>
             </div>
-            <div class="control-group hidden" id="customDateInputs">
+            <div class="control-group hidden" id="customDateStart">
                 <label>Start Date</label>
                 <input type="date" id="startDate">
             </div>
-            <div class="control-group hidden" id="customDateInputsEnd">
+            <div class="control-group hidden" id="customDateEnd">
                 <label>End Date</label>
                 <input type="date" id="endDate">
             </div>
@@ -949,6 +950,14 @@
             </div>
         </div>
 
+        <div id="activeFiltersBar" class="hidden" style="padding: 12px 20px; background: rgba(16, 185, 129, 0.1); border-left: 3px solid #10B981; margin-bottom: 16px; border-radius: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+                <span style="font-weight: 600; color: #10B981; font-size: 13px;">Active Filters:</span>
+                <div id="filterBadges" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+                <button onclick="clearFilters()" style="margin-left: auto; padding: 4px 12px; background: rgba(239, 68, 68, 0.1); border: 1px solid #EF4444; color: #EF4444; border-radius: 4px; cursor: pointer; font-size: 12px; font-weight: 600;">Clear All</button>
+            </div>
+        </div>
+
         <div class="table-container">
             <div class="empty-state" id="emptyState">
                 <h3>No ads loaded</h3>
@@ -1001,6 +1010,7 @@
         let adsData = [];
         let filteredData = [];
         let currentSort = { column: null, direction: 'asc' };
+        let columnFilters = {}; // Track active column filters
 
         // Pre-loaded tracker data from manual tracking
         const trackerData = {
@@ -1314,12 +1324,20 @@
         async function fetchAds() {
             let token = localStorage.getItem('metaAccessToken');
             let accountId = localStorage.getItem('metaAdAccountId');
-            const dateRange = parseInt(localStorage.getItem('metaDateRange') || '30');
             const maxAds = parseInt(document.getElementById('maxAds')?.value || 500);
+
+            // Get date range from inputs
+            const startDateValue = document.getElementById('startDate').value;
+            const endDateValue = document.getElementById('endDate').value;
 
             if (!token || !accountId) {
                 alert('Please configure API settings first');
                 toggleApiConfig();
+                return;
+            }
+
+            if (!startDateValue || !endDateValue) {
+                alert('Please select a date range first');
                 return;
             }
 
@@ -1332,11 +1350,8 @@
             showLoading();
 
             try {
-                const today = new Date();
-                const startDate = new Date(today.getTime() - dateRange * 24 * 60 * 60 * 1000);
-                const dateFormat = (date) => date.toISOString().split('T')[0];
-                const since = dateFormat(startDate);
-                const until = dateFormat(today);
+                const since = startDateValue;
+                const until = endDateValue;
 
                 console.log('Fetching ads from account:', accountId);
                 console.log('Date range:', since, 'to', until);
@@ -1619,51 +1634,54 @@
                 return;
             }
 
+            // Filter to ACTIVE ads only
+            const activeAds = adsData.filter(ad => ad.status === 'ACTIVE');
+
+            if (activeAds.length === 0) {
+                banner.classList.add('hidden');
+                return;
+            }
+
             // Calculate key metrics
-            const totalSpend = adsData.reduce((sum, ad) => sum + ad.spend, 0);
-            const avgROAS = adsData.reduce((sum, ad) => sum + ad.roas, 0) / adsData.length;
+            const totalSpend = activeAds.reduce((sum, ad) => sum + ad.spend, 0);
+            const avgROAS = activeAds.reduce((sum, ad) => sum + ad.roas, 0) / activeAds.length;
             const TARGET_CPA = 126.99;
 
             // Find top spending adsets
-            const topSpenders = adsData
+            const topSpenders = activeAds
                 .filter(ad => ad.spend > 0)
                 .sort((a, b) => b.spend - a.spend)
                 .slice(0, 5);
 
-            // Find profitable adsets (good CPA)
-            const profitableAds = adsData.filter(ad => ad.spend > 0 && ad.spend < TARGET_CPA && ad.roas >= 2.0);
-
             // Find new adsets (low spend)
-            const newAds = adsData.filter(ad => ad.spend < 50 && ad.spend > 0);
+            const newAds = activeAds.filter(ad => ad.spend < 50 && ad.spend > 0);
 
-            // Find adsets picking up spend
-            const pickingUpSpend = adsData.filter(ad => ad.spend >= 50 && ad.spend < 200);
-
-            // Generate insights
+            // Generate insights with human sentences
             let insights = '<ul>';
 
-            // Top spenders
+            // Top spender analysis
             if (topSpenders.length > 0) {
                 const topAd = topSpenders[0];
-                if (topAd.roas >= 2.0 && topAd.spend < TARGET_CPA) {
-                    insights += `<li><strong>Top Performer:</strong> ${topAd.adsetName} - $${topAd.spend.toFixed(2)} spend, ${topAd.roas.toFixed(2)}x ROAS (under CPA target - SCALE THIS)</li>`;
+                if (topAd.roas >= 2.5 && topAd.spend < TARGET_CPA) {
+                    insights += `<li>Your top spender "${topAd.adsetName}" is absolutely crushing it with $${topAd.spend.toFixed(0)} spent and a ${topAd.roas.toFixed(1)}x ROAS - this one's still under your $${TARGET_CPA} CPA target, so there's room to push more budget here.</li>`;
                 } else if (topAd.roas < 1.5) {
-                    insights += `<li><strong>Warning:</strong> Top spender ${topAd.adsetName} ($${topAd.spend.toFixed(2)}) has low ROAS (${topAd.roas.toFixed(2)}x) - Consider pausing</li>`;
+                    insights += `<li>Heads up - "${topAd.adsetName}" is eating most of your budget at $${topAd.spend.toFixed(0)}, but it's only pulling ${topAd.roas.toFixed(1)}x ROAS. Might be time to throttle this one down or kill it.</li>`;
                 } else {
-                    insights += `<li><strong>Top Spender:</strong> ${topAd.adsetName} - $${topAd.spend.toFixed(2)} spend, ${topAd.roas.toFixed(2)}x ROAS</li>`;
+                    insights += `<li>"${topAd.adsetName}" is your biggest spender today at $${topAd.spend.toFixed(0)} with ${topAd.roas.toFixed(1)}x ROAS - it's performing okay, just keep an eye on it.</li>`;
                 }
             }
 
-            // Profitable adsets
-            if (profitableAds.length > 0) {
-                insights += `<li><strong>Scaling Opportunities:</strong> ${profitableAds.length} adset${profitableAds.length > 1 ? 's' : ''} with good CPA and ROAS - ready to scale</li>`;
+            // New adsets status
+            if (newAds.length > 0) {
+                insights += `<li>You've got ${newAds.length} new adset${newAds.length > 1 ? 's' : ''} in the testing phase (under $50 spent) - still gathering data, check back in a day or two.</li>`;
+            } else {
+                insights += `<li>No new adsets are getting spend right now - if you've got fresh creative ready, now might be a good time to launch some tests.</li>`;
             }
 
-            // New adsets
-            if (newAds.length > 0) {
-                insights += `<li><strong>New Adsets:</strong> ${newAds.length} adset${newAds.length > 1 ? 's are' : ' is'} in early testing phase (under $50 spend)</li>`;
-            } else {
-                insights += `<li><strong>New Adsets:</strong> No new adsets getting spend - consider launching fresh tests</li>`;
+            // Winners count
+            const winners = activeAds.filter(ad => ad.decision === 'Winner').length;
+            if (winners > 0) {
+                insights += `<li>You have ${winners} active winner${winners > 1 ? 's' : ''} running - these are your money makers, make sure they're getting enough budget.</li>`;
             }
 
             insights += '</ul>';
@@ -1671,7 +1689,7 @@
             insightText.innerHTML = insights;
 
             // Detailed insights
-            let details = '<strong>Detailed Breakdown:</strong><br><br>';
+            let details = '<strong>Detailed Breakdown (Active Ads Only):</strong><br><br>';
 
             details += '<strong>Top 3 Spending Adsets:</strong><ul>';
             topSpenders.slice(0, 3).forEach((ad, i) => {
@@ -1679,19 +1697,11 @@
             });
             details += '</ul><br>';
 
-            if (profitableAds.length > 0) {
-                details += '<strong>Profitable Adsets (Good CPA + ROAS):</strong><ul>';
-                profitableAds.slice(0, 3).forEach(ad => {
-                    details += `<li>${ad.adsetName} - $${ad.spend.toFixed(2)} spend | ${ad.roas.toFixed(2)}x ROAS</li>`;
-                });
-                details += '</ul><br>';
-            }
-
-            details += `<strong>Account Overview:</strong><br>`;
-            details += `Total Spend: $${totalSpend.toFixed(2)}<br>`;
+            details += `<strong>Account Overview (Active Only):</strong><br>`;
+            details += `Total Active Spend: $${totalSpend.toFixed(2)}<br>`;
             details += `Average ROAS: ${avgROAS.toFixed(2)}x<br>`;
-            details += `Total Adsets: ${adsData.length}<br>`;
-            details += `Winners: ${adsData.filter(ad => ad.decision === 'Winner').length}`;
+            details += `Active Adsets: ${activeAds.length}<br>`;
+            details += `Winners: ${winners}`;
 
             insightDetails.innerHTML = details;
 
@@ -2163,18 +2173,25 @@
                 const statusLabel = isActive ? 'ON' : 'OFF';
                 const statusClass = isActive ? 'on' : 'off';
 
-                // LP hyperlink
-                const lpName = ad.landingPageName || extractLandingPageName(ad.adsetName);
+                // LP hyperlink - show "PDP" for lp1/lp2
+                let lpName = ad.landingPageName || extractLandingPageName(ad.adsetName);
+                if (lpName && (lpName.toLowerCase() === 'lp1' || lpName.toLowerCase() === 'lp2')) {
+                    lpName = 'PDP';
+                }
                 const lpLink = ad.landingPage || '#';
                 const lpHtml = lpName ? `<a href="${lpLink}" target="_blank" style="color: #A5B4FC; text-decoration: none;">${lpName}</a>` : '—';
 
+                // Make variation clickable for filtering
+                const variationValue = ad.variation || extractVariation(ad.adsetName);
+                const variationClickable = variationValue ? `<span onclick="filterByColumn('variation', '${variationValue}')" style="cursor: pointer;">${variationHtml}</span>` : variationHtml;
+
                 row.innerHTML = `
                     <td class="fixed-column col-adset">${ad.adsetName || 'Unknown'}</td>
-                    <td class="fixed-column col-lp">${lpHtml}</td>
-                    <td>${variationHtml}</td>
+                    <td class="fixed-column col-lp" onclick="filterByColumn('landingPage', '${lpName || ''}')" style="cursor: pointer;">${lpHtml}</td>
+                    <td>${variationClickable}</td>
                     <td><textarea class="hypothesis-input" data-index="${index}" onchange="updateHypothesis(${index}, this.value)" placeholder="Enter hypothesis...">${ad.hypothesis || ''}</textarea></td>
-                    <td>${ad.author}</td>
-                    <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
+                    <td onclick="filterByColumn('author', '${ad.author}')" style="cursor: pointer;">${ad.author}</td>
+                    <td onclick="filterByColumn('decision', '${ad.decision}')" style="cursor: pointer;"><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
                     <td class="metric">${ad.spend.toFixed(2)}</td>
                     <td class="metric">${ad.linkClicks || 0}</td>
                     <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
@@ -2193,7 +2210,7 @@
                                 <input type="checkbox" ${isActive ? 'checked' : ''} onchange="toggleAdsetStatus('${ad.adsetId}', '${ad.adsetName}', this.checked)">
                                 <span class="slider"></span>
                             </label>
-                            <span class="status-label ${statusClass}">${statusLabel}</span>
+                            <span class="status-label ${statusClass}" onclick="filterByColumn('status', '${ad.status}')" style="cursor: pointer;">${statusLabel}</span>
                         </div>
                     </td>
                     <td class="fixed-column col-learnings" style="padding: 16px;">
@@ -2343,17 +2360,17 @@
         // Handle date range selection
         function handleDateRangeChange() {
             const select = document.getElementById('dateRangeSelect');
-            const customInputs = document.getElementById('customDateInputs');
-            const customInputsEnd = document.getElementById('customDateInputsEnd');
+            const customStart = document.getElementById('customDateStart');
+            const customEnd = document.getElementById('customDateEnd');
             const startDateInput = document.getElementById('startDate');
             const endDateInput = document.getElementById('endDate');
 
             if (select.value === 'custom') {
-                customInputs.classList.remove('hidden');
-                customInputsEnd.classList.remove('hidden');
+                customStart.classList.remove('hidden');
+                customEnd.classList.remove('hidden');
             } else {
-                customInputs.classList.add('hidden');
-                customInputsEnd.classList.add('hidden');
+                customStart.classList.add('hidden');
+                customEnd.classList.add('hidden');
 
                 // Calculate dates based on selection
                 const endDate = new Date();
@@ -2381,11 +2398,31 @@
                 if (author && ad.author !== author) return false;
                 if (avatar && ad.avatar !== avatar) return false;
                 if (format && ad.format !== format) return false;
+
+                // Apply column filters
+                for (const [column, value] of Object.entries(columnFilters)) {
+                    if (column === 'status') {
+                        if (ad.status !== value) return false;
+                    } else if (column === 'variation') {
+                        const adVariation = ad.variation || extractVariation(ad.adsetName);
+                        if (adVariation !== value) return false;
+                    } else if (column === 'landingPage') {
+                        let lpName = ad.landingPageName || extractLandingPageName(ad.adsetName);
+                        if (lpName && (lpName.toLowerCase() === 'lp1' || lpName.toLowerCase() === 'lp2')) {
+                            lpName = 'PDP';
+                        }
+                        if (lpName !== value) return false;
+                    } else {
+                        if (ad[column] !== value) return false;
+                    }
+                }
+
                 return true;
             });
 
             renderRows();
             updateStats();
+            updateFilterDisplay();
         }
 
         function clearFilters() {
@@ -2393,7 +2430,39 @@
             document.getElementById('filterAuthor').value = '';
             document.getElementById('filterAvatar').value = '';
             document.getElementById('filterFormat').value = '';
+            columnFilters = {};
             applyFilters();
+        }
+
+        function filterByColumn(column, value) {
+            if (columnFilters[column] === value) {
+                // Toggle off if clicking the same value
+                delete columnFilters[column];
+            } else {
+                columnFilters[column] = value;
+            }
+            applyFilters();
+        }
+
+        function updateFilterDisplay() {
+            const filterBar = document.getElementById('activeFiltersBar');
+            const filterBadges = document.getElementById('filterBadges');
+            const filterKeys = Object.keys(columnFilters);
+
+            if (filterKeys.length > 0) {
+                filterBar.classList.remove('hidden');
+                filterBadges.innerHTML = filterKeys.map(key => {
+                    const value = columnFilters[key];
+                    const displayKey = key === 'landingPage' ? 'LP' : key.charAt(0).toUpperCase() + key.slice(1);
+                    return `<span style="background: rgba(16, 185, 129, 0.15); padding: 4px 10px; border-radius: 4px; font-size: 12px; color: #10B981; font-weight: 500; border: 1px solid rgba(16, 185, 129, 0.3); display: inline-flex; align-items: center; gap: 6px;">
+                        ${displayKey}: <strong>${value}</strong>
+                        <span onclick="filterByColumn('${key}', '${value}')" style="cursor: pointer; color: #EF4444; font-weight: bold; margin-left: 2px;">×</span>
+                    </span>`;
+                }).join('');
+            } else {
+                filterBar.classList.add('hidden');
+                filterBadges.innerHTML = '';
+            }
         }
 
         // Statistics
