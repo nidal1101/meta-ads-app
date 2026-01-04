@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Ads Analyzer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,35 +13,74 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #0F0F23;
+            color: #E2E8F0;
+            line-height: 1.6;
             min-height: 100vh;
-            padding: 20px;
+            position: relative;
+        }
+
+        /* Animated gradient background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 50% 50%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+            animation: gradientShift 15s ease infinite;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                opacity: 0.8;
+                transform: scale(1.1) rotate(5deg);
+            }
         }
 
         .container {
             max-width: 1800px;
             margin: 0 auto;
-            background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
+            position: relative;
+            z-index: 1;
         }
 
+        /* Header */
         .header {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-            color: white;
-            padding: 30px;
+            background: rgba(15, 15, 35, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 20px 40px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
             gap: 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
 
         .header h1 {
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 900;
+            background: linear-gradient(135deg, #6366F1 0%, #EC4899 50%, #8B5CF6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -1px;
         }
 
         .header-actions {
@@ -49,92 +89,108 @@
             flex-wrap: wrap;
         }
 
+        /* Professional buttons - no emojis, uppercase */
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
-            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.2s ease;
             display: inline-flex;
             align-items: center;
             gap: 8px;
+            font-family: inherit;
         }
 
         .btn-primary {
-            background: #10b981;
+            background: #6366F1;
             color: white;
+            border: 1px solid #6366F1;
         }
 
         .btn-primary:hover {
-            background: #059669;
+            background: #5558E3;
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(99, 102, 241, 0.4);
         }
 
         .btn-secondary {
-            background: white;
-            color: #1e3a8a;
+            background: rgba(255, 255, 255, 0.08);
+            color: #E2E8F0;
+            border: 1px solid rgba(255, 255, 255, 0.15);
         }
 
         .btn-secondary:hover {
-            background: #f3f4f6;
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
             transform: translateY(-2px);
         }
 
         .btn-analyze {
-            background: #8b5cf6;
+            background: linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%);
             color: white;
+            border: none;
         }
 
         .btn-analyze:hover {
-            background: #7c3aed;
             transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(139, 92, 246, 0.4);
         }
 
+        /* Controls and Filters */
         .controls {
-            padding: 20px 30px;
-            background: #f9fafb;
-            border-bottom: 2px solid #e5e7eb;
+            padding: 24px 40px;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             display: flex;
             flex-wrap: wrap;
-            gap: 15px;
+            gap: 16px;
             align-items: center;
         }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 8px;
         }
 
         .control-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #6b7280;
+            font-size: 11px;
+            font-weight: 700;
+            color: #94A3B8;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .control-group select,
         .control-group input {
-            padding: 8px 12px;
-            border: 2px solid #e5e7eb;
-            border-radius: 6px;
+            padding: 10px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            color: #E2E8F0;
             font-size: 14px;
+            font-family: inherit;
             min-width: 150px;
-            transition: border-color 0.3s;
+            transition: all 0.2s ease;
         }
 
         .control-group select:focus,
         .control-group input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #6366F1;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
         .api-config {
-            padding: 20px 30px;
-            background: #fef3c7;
-            border-bottom: 2px solid #fbbf24;
+            padding: 24px 40px;
+            background: rgba(251, 191, 36, 0.1);
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
             display: flex;
             flex-wrap: wrap;
             gap: 15px;
@@ -145,149 +201,204 @@
             display: none;
         }
 
+        /* Table */
         .table-container {
             overflow-x: auto;
-            padding: 20px 30px;
+            padding: 24px 40px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
             font-size: 13px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 12px;
+            overflow: hidden;
         }
 
         thead {
-            background: #1f2937;
-            color: white;
+            background: rgba(255, 255, 255, 0.05);
+            color: #94A3B8;
             position: sticky;
             top: 0;
             z-index: 10;
         }
 
         th {
-            padding: 12px 10px;
+            padding: 14px 16px;
             text-align: left;
-            font-weight: 600;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
             cursor: pointer;
             user-select: none;
             white-space: nowrap;
             position: relative;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         th:hover {
-            background: #374151;
+            background: rgba(255, 255, 255, 0.08);
         }
 
         th.sortable::after {
             content: ' ↕';
             opacity: 0.5;
-            font-size: 12px;
+            font-size: 11px;
         }
 
         th.sorted-asc::after {
             content: ' ↑';
             opacity: 1;
+            color: #6366F1;
         }
 
         th.sorted-desc::after {
             content: ' ↓';
             opacity: 1;
+            color: #6366F1;
         }
 
         tbody tr {
-            border-bottom: 1px solid #e5e7eb;
-            transition: background-color 0.2s;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s;
         }
 
         tbody tr:hover {
-            background: #f9fafb;
+            background: rgba(255, 255, 255, 0.03);
         }
 
         tbody tr.winner {
-            border-left: 4px solid #10b981;
-            background: #f0fdf4;
+            border-left: 3px solid #10B981;
+            background: rgba(16, 185, 129, 0.05);
         }
 
         tbody tr.launched {
-            border-left: 4px solid #3b82f6;
-            background: #eff6ff;
+            border-left: 3px solid #6366F1;
+            background: rgba(99, 102, 241, 0.05);
         }
 
         tbody tr.killed {
-            border-left: 4px solid #ef4444;
-            background: #fef2f2;
+            border-left: 3px solid #EF4444;
+            background: rgba(239, 68, 68, 0.05);
         }
 
         td {
-            padding: 12px 10px;
+            padding: 16px;
+            color: #E2E8F0;
         }
 
+        /* Decision badges */
         .decision-badge {
-            padding: 4px 10px;
-            border-radius: 12px;
+            padding: 6px 12px;
+            border-radius: 8px;
             font-size: 11px;
             font-weight: 700;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
             display: inline-block;
         }
 
         .decision-winner {
-            background: #10b981;
-            color: white;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34D399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
         }
 
         .decision-launched {
-            background: #3b82f6;
-            color: white;
+            background: rgba(99, 102, 241, 0.15);
+            color: #A5B4FC;
+            border: 1px solid rgba(99, 102, 241, 0.3);
         }
 
         .decision-killed {
-            background: #ef4444;
-            color: white;
+            background: rgba(239, 68, 68, 0.15);
+            color: #FCA5A5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        /* Variation badges */
+        .variation-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 700;
+            color: #CBD5E1;
+        }
+
+        .variation-badge.winning {
+            background: rgba(16, 185, 129, 0.15);
+            border-color: #10B981;
+            color: #34D399;
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .variation-badge .crown {
+            font-size: 14px;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.6));
         }
 
         .format-badge {
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 600;
-            background: #e5e7eb;
-            color: #1f2937;
+            background: rgba(255, 255, 255, 0.08);
+            color: #CBD5E1;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
+        /* Learnings and AI Insights */
         .learnings-input {
             width: 200px;
             min-height: 60px;
-            padding: 6px;
-            border: 1px solid #d1d5db;
-            border-radius: 4px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 6px;
+            color: #E2E8F0;
             font-size: 12px;
             font-family: inherit;
             resize: vertical;
+            transition: all 0.2s ease;
         }
 
         .learnings-input:focus {
             outline: none;
-            border-color: #3b82f6;
+            border-color: #6366F1;
+            background: rgba(255, 255, 255, 0.08);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
         }
 
+        .learnings-input::placeholder {
+            color: #64748B;
+        }
+
+        /* Metrics */
         .metric {
-            font-weight: 600;
+            font-weight: 700;
             font-variant-numeric: tabular-nums;
         }
 
         .metric-good {
-            color: #10b981;
+            color: #34D399;
         }
 
         .metric-bad {
-            color: #ef4444;
+            color: #FCA5A5;
         }
 
+        /* Analysis Section */
         .analysis-section {
-            padding: 30px;
-            background: #f9fafb;
-            border-top: 2px solid #e5e7eb;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .analysis-section.hidden {
@@ -298,31 +409,44 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 20px;
+            margin-bottom: 30px;
         }
 
         .analysis-header h2 {
-            font-size: 24px;
-            color: #1f2937;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .insights-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 20px;
+            gap: 24px;
         }
 
         .insight-card {
-            background: white;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .insight-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-4px);
         }
 
         .insight-card h3 {
             font-size: 16px;
-            color: #1f2937;
-            margin-bottom: 15px;
+            font-weight: 700;
+            color: #E2E8F0;
+            margin-bottom: 16px;
             display: flex;
             align-items: center;
             gap: 10px;
@@ -338,10 +462,11 @@
         }
 
         .insight-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #f3f4f6;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
             font-size: 14px;
-            color: #4b5563;
+            color: #CBD5E1;
+            line-height: 1.6;
         }
 
         .insight-list li:last-child {
@@ -349,13 +474,15 @@
         }
 
         .insight-list li strong {
-            color: #1f2937;
+            color: #E2E8F0;
+            font-weight: 600;
         }
 
+        /* Loading and Empty States */
         .loading {
             text-align: center;
             padding: 60px 20px;
-            color: #6b7280;
+            color: #94A3B8;
         }
 
         .loading::after {
@@ -372,42 +499,62 @@
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #6b7280;
+            color: #94A3B8;
         }
 
         .empty-state h3 {
             font-size: 20px;
             margin-bottom: 10px;
+            color: #E2E8F0;
         }
 
+        /* Stats Bar */
         .stats-bar {
-            display: flex;
-            gap: 30px;
-            padding: 20px 30px;
-            background: white;
-            border-bottom: 2px solid #e5e7eb;
-            flex-wrap: wrap;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 16px;
+            padding: 24px 40px;
+            background: rgba(255, 255, 255, 0.02);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .stat:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(99, 102, 241, 0.3);
+            transform: translateY(-2px);
         }
 
         .stat-label {
             font-size: 11px;
-            font-weight: 600;
-            color: #6b7280;
+            font-weight: 700;
+            color: #94A3B8;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 28px;
             font-weight: 700;
-            color: #1f2937;
+            color: #E2E8F0;
         }
 
+        .stat-value.success {
+            background: linear-gradient(135deg, #10B981 0%, #34D399 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Links */
         .link-cell {
             max-width: 200px;
             overflow: hidden;
@@ -416,11 +563,13 @@
         }
 
         .link-cell a {
-            color: #3b82f6;
+            color: #A5B4FC;
             text-decoration: none;
+            transition: color 0.2s ease;
         }
 
         .link-cell a:hover {
+            color: #6366F1;
             text-decoration: underline;
         }
     </style>
@@ -428,15 +577,15 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📈 Meta Ads Analyzer</h1>
+            <h1>META ADS ANALYZER</h1>
             <div class="header-actions">
-                <button class="btn btn-secondary" onclick="toggleApiConfig()">⚙️ API Config</button>
-                <button class="btn btn-secondary" onclick="toggleCampaignSelector()">📂 Select Campaigns</button>
-                <button class="btn btn-primary" onclick="fetchAds()">🔄 Fetch Ads</button>
-                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import Tracker Data</button>
+                <button class="btn btn-secondary" onclick="toggleApiConfig()">Settings</button>
+                <button class="btn btn-secondary" onclick="toggleCampaignSelector()">Campaigns</button>
+                <button class="btn btn-primary" onclick="fetchAds()">Fetch Ads</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">Import Tracker</button>
                 <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display:none" onchange="importLearnings(event)">
-                <button class="btn btn-analyze" onclick="analyzeAds()">🤖 AI Analysis</button>
-                <button class="btn btn-secondary" onclick="exportToExcel()">📊 Export Excel</button>
+                <button class="btn btn-analyze" onclick="analyzeAds()">AI Analysis</button>
+                <button class="btn btn-secondary" onclick="exportToExcel()">Export</button>
             </div>
         </div>
 
@@ -518,11 +667,11 @@
             </div>
             <div class="stat">
                 <span class="stat-label">Winners</span>
-                <span class="stat-value" style="color: #10b981;" id="statWinners">0</span>
+                <span class="stat-value success" id="statWinners">0</span>
             </div>
             <div class="stat">
                 <span class="stat-label">Avg ROAS</span>
-                <span class="stat-value" id="statRoas">0.00</span>
+                <span class="stat-value success" id="statRoas">0.00</span>
             </div>
             <div class="stat">
                 <span class="stat-label">Total Spend</span>
@@ -544,22 +693,18 @@
                 <thead>
                     <tr>
                         <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
+                        <th class="sortable" onclick="sortTable('variation')">Variation</th>
                         <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
                         <th class="sortable" onclick="sortTable('campaignName')">Campaign</th>
                         <th class="sortable" onclick="sortTable('author')">Author</th>
-                        <th class="sortable" onclick="sortTable('landingPage')">Landing Page</th>
                         <th class="sortable" onclick="sortTable('decision')">Decision</th>
-                        <th class="sortable" onclick="sortTable('hypothesis')">Hypothesis</th>
                         <th class="sortable" onclick="sortTable('format')">Format</th>
                         <th class="sortable" onclick="sortTable('avatar')">Avatar</th>
-                        <th class="sortable" onclick="sortTable('angle')">Angle/Hook</th>
                         <th class="sortable" onclick="sortTable('ctr')">CTR (%)</th>
                         <th class="sortable" onclick="sortTable('cpc')">CPC ($)</th>
                         <th class="sortable" onclick="sortTable('spend')">Spend ($)</th>
                         <th class="sortable" onclick="sortTable('roas')">ROAS</th>
-                        <th class="sortable" onclick="sortTable('frequency')">Frequency</th>
-                        <th class="sortable" onclick="sortTable('purchases')">Purchases</th>
-                        <th style="min-width: 300px;">Learnings & AI Insights</th>
+                        <th style="min-width: 350px;">Learnings & AI</th>
                     </tr>
                 </thead>
                 <tbody id="adsTableBody">
@@ -1022,8 +1167,9 @@
                                      ad.creative.object_story_spec?.video_data?.link || '';
                     }
 
-                    // Extract batch number and merge with tracker data
+                    // Extract batch number, variation, and merge with tracker data
                     const batchNumber = extractBatchNumber(ad.name);
+                    const variation = extractVariation(ad.adset?.name || ad.name);
                     const trackerInfo = trackerData[batchNumber] || {};
 
                     // Build base ad object
@@ -1033,6 +1179,7 @@
                     const adData = {
                         creativeId: ad.id,
                         batchNumber: batchNumber,
+                        variation: variation,
                         adsetName: ad.adset?.name || 'Unknown',
                         campaignName: ad.campaign?.name || 'Unknown',
                         author: trackerInfo.author || extractAuthor(ad.name),
@@ -1054,6 +1201,9 @@
 
                     return adData;
                 });
+
+                // Determine winning variations
+                determineWinningVariations();
 
                 hideLoading();
 
@@ -1078,6 +1228,18 @@
             // Match patterns like "BATCH#023", "BATCH #023", "#023", "Batch#023A.1", etc.
             const match = name.match(/(?:BATCH\s*#?\s*|#)(\d+[A-Z]?(?:\.\d+)?)/i);
             return match ? match[1].toUpperCase() : '';
+        }
+
+        function extractVariation(name) {
+            // Extract variation like 172A, 172B, 172C from ad name or adset name
+            const match = name.match(/(\d{3}[A-Z])/);
+            if (match) return match[1];
+
+            // Also try simpler patterns like just A, B, C at the end
+            const simpleMatch = name.match(/\s+([A-C])$/i);
+            if (simpleMatch) return simpleMatch[1].toUpperCase();
+
+            return '';
         }
 
         function extractAuthor(name) {
@@ -1111,49 +1273,86 @@
             return 'Killed';
         }
 
+        // Determine winning variation for each batch
+        function determineWinningVariations() {
+            // Group ads by their base number (extract 172 from 172A, 172B, etc.)
+            const batchGroups = {};
+
+            adsData.forEach(ad => {
+                if (!ad.variation) return;
+
+                // Extract base number (172 from 172A)
+                const baseMatch = ad.variation.match(/(\d+)/);
+                if (!baseMatch) return;
+
+                const baseNumber = baseMatch[1];
+                if (!batchGroups[baseNumber]) {
+                    batchGroups[baseNumber] = [];
+                }
+                batchGroups[baseNumber].push(ad);
+            });
+
+            // For each group, find the variation with highest ROAS
+            Object.values(batchGroups).forEach(group => {
+                if (group.length <= 1) return;
+
+                let bestAd = group[0];
+                group.forEach(ad => {
+                    if (ad.roas > bestAd.roas) {
+                        bestAd = ad;
+                    }
+                });
+
+                // Mark the best one as winning variation
+                bestAd.isWinningVariation = true;
+            });
+        }
+
         // Generate AI insights based on performance metrics
         function generateAIInsights(spend, roas, ctr, cpc) {
+            const TARGET_CPA = 126.99;
             const insights = [];
 
             // ROAS Analysis
             if (roas >= 3.0) {
-                insights.push(`🎯 Strong ROAS (${roas.toFixed(2)}x) - This ad is highly profitable. Consider scaling spend.`);
+                insights.push(`🎯 Strong ROAS (${roas.toFixed(2)}x) - Highly profitable. Scale this variation.`);
             } else if (roas >= 1.5 && roas < 3.0) {
-                insights.push(`📊 Moderate ROAS (${roas.toFixed(2)}x) - Profitable but room for optimization. Test new angles or creative variations.`);
+                insights.push(`📊 Moderate ROAS (${roas.toFixed(2)}x) - Profitable but room for optimization.`);
             } else if (roas > 0 && roas < 1.5) {
-                insights.push(`⚠️ Low ROAS (${roas.toFixed(2)}x) - Underperforming. Consider pausing or testing different targeting/creative.`);
+                insights.push(`⚠️ Low ROAS (${roas.toFixed(2)}x) - Underperforming.`);
             }
 
             // CTR Analysis
             if (ctr >= 2.0) {
-                insights.push(`✨ Excellent CTR (${ctr.toFixed(2)}%) - Hook is working well. Audience finds this highly relevant.`);
+                insights.push(`✨ Excellent CTR (${ctr.toFixed(2)}%) - Hook resonating well.`);
             } else if (ctr >= 1.0 && ctr < 2.0) {
-                insights.push(`👍 Good CTR (${ctr.toFixed(2)}%) - Decent engagement. Test stronger hooks to improve.`);
+                insights.push(`👍 Good CTR (${ctr.toFixed(2)}%) - Decent engagement.`);
             } else if (ctr < 1.0 && ctr > 0) {
-                insights.push(`👎 Low CTR (${ctr.toFixed(2)}%) - Weak hook or poor audience fit. Needs creative refresh.`);
+                insights.push(`👎 Low CTR (${ctr.toFixed(2)}%) - Weak hook.`);
             }
 
-            // CPC Analysis
-            if (cpc <= 1.0 && cpc > 0) {
-                insights.push(`💰 Low CPC ($${cpc.toFixed(2)}) - Efficient spend. Good audience targeting.`);
-            } else if (cpc > 2.0) {
-                insights.push(`💸 High CPC ($${cpc.toFixed(2)}) - Expensive clicks. Review targeting or improve relevance score.`);
-            }
-
-            // Spend Analysis
-            if (spend > 200) {
-                insights.push(`📈 High spend ($${spend.toFixed(2)}) - Meta is scaling this. Monitor closely for fatigue.`);
-            } else if (spend < 50 && spend > 0) {
-                insights.push(`🔍 Low spend ($${spend.toFixed(2)}) - Limited data. Let it run longer before making decisions.`);
+            // CPA Analysis - Critical metric for scaling decisions
+            if (spend < TARGET_CPA * 0.5) {
+                const remaining = (TARGET_CPA - spend).toFixed(2);
+                insights.push(`💰 Spent $${spend.toFixed(2)} (well under $${TARGET_CPA} CPA target) - Strong candidate for scaling. $${remaining} room to spend.`);
+            } else if (spend < TARGET_CPA) {
+                const remaining = (TARGET_CPA - spend).toFixed(2);
+                insights.push(`💰 Spent $${spend.toFixed(2)} (under $${TARGET_CPA} CPA target) - Room to scale spend. $${remaining} remaining.`);
+            } else if (spend >= TARGET_CPA && spend < TARGET_CPA * 1.5) {
+                const over = (spend - TARGET_CPA).toFixed(2);
+                insights.push(`💸 Spent $${spend.toFixed(2)} (above $${TARGET_CPA} CPA) - Optimize or kill variation. $${over} over target.`);
+            } else if (spend >= TARGET_CPA * 1.5) {
+                const over = (spend - TARGET_CPA).toFixed(2);
+                insights.push(`🛑 Spent $${spend.toFixed(2)} (far above $${TARGET_CPA} CPA target) - Kill this variation immediately. $${over} over target.`);
             }
 
             // Combined Analysis
-            if (roas > 2.5 && ctr > 1.5 && cpc < 1.5) {
-                insights.push(`🏆 WINNER PATTERN: High ROAS + Strong CTR + Low CPC. This is your golden combination - replicate this approach!`);
+            if (roas > 2.5 && ctr > 1.5 && spend < TARGET_CPA) {
+                insights.push(`🏆 WINNER: High ROAS + Strong CTR + Under CPA - Perfect scaling candidate!`);
             }
 
             if (roas < 1.0 && ctr < 1.0) {
-                insights.push(`🛑 KILL SIGNAL: Both ROAS and CTR are poor. This concept isn't resonating - move on.`);
+                insights.push(`🛑 KILL SIGNAL: Both ROAS and CTR are poor. Move on.`);
             }
 
             return insights.join(' ');
@@ -1165,51 +1364,54 @@
                 {
                     creativeId: 'AD001',
                     batchNumber: '023',
+                    variation: '172A',
                     adsetName: 'Fitness Transformation - 25-40',
                     campaignName: 'Q4 Fitness Campaign',
-                    author: 'John Smith',
+                    author: 'Nidal',
                     landingPage: 'https://example.com/product-a',
                     decision: 'Winner',
                     hypothesis: 'Pain point messaging resonates with target audience',
                     format: 'Video',
-                    avatar: 'Fitness Enthusiast',
-                    angle: 'Transformation Story',
+                    avatar: 'The Family Protector',
+                    angle: 'Emotional hook + before/after',
                     ctr: 2.45,
                     cpc: 0.85,
-                    spend: 1250.00,
+                    spend: 102.00,
                     roas: 4.2,
                     frequency: 2.1,
-                    purchases: 47,
+                    purchases: 8,
                     learnings: 'Emotional hooks perform best. Focus on before/after.',
-                    aiInsights: generateAIInsights(1250, 4.2, 2.45, 0.85)
+                    aiInsights: generateAIInsights(102, 4.2, 2.45, 0.85)
                 },
                 {
                     creativeId: 'AD002',
                     batchNumber: '024',
+                    variation: '172B',
                     adsetName: 'Social Proof Test',
                     campaignName: 'Q4 Fitness Campaign',
-                    author: 'Sarah Johnson',
+                    author: 'Riley',
                     landingPage: 'https://example.com/product-b',
                     decision: 'Launched',
                     hypothesis: 'Social proof increases conversions',
                     format: 'Image',
-                    avatar: 'Budget Shopper',
+                    avatar: 'The Outdoor Enthusiast',
                     angle: 'Customer Reviews',
                     ctr: 1.82,
                     cpc: 1.20,
-                    spend: 890.50,
+                    spend: 118.50,
                     roas: 2.8,
                     frequency: 1.8,
-                    purchases: 28,
+                    purchases: 3,
                     learnings: 'Review screenshots work well. Need more testimonials.',
-                    aiInsights: generateAIInsights(890.50, 2.8, 1.82, 1.20)
+                    aiInsights: generateAIInsights(118.50, 2.8, 1.82, 1.20)
                 },
                 {
                     creativeId: 'AD003',
                     batchNumber: '025',
+                    variation: '172C',
                     adsetName: 'Feature Test',
                     campaignName: 'Q4 Fitness Campaign',
-                    author: 'Mike Chen',
+                    author: 'Nidal',
                     landingPage: 'https://example.com/product-c',
                     decision: 'Killed',
                     hypothesis: 'Feature-focused messaging drives clicks',
@@ -1218,12 +1420,12 @@
                     angle: 'Product Features',
                     ctr: 0.65,
                     cpc: 2.50,
-                    spend: 450.00,
+                    spend: 220.00,
                     roas: 0.8,
                     frequency: 3.2,
-                    purchases: 5,
+                    purchases: 1,
                     learnings: 'Too technical. Need emotional angle instead.',
-                    aiInsights: generateAIInsights(450, 0.8, 0.65, 2.50)
+                    aiInsights: generateAIInsights(220, 0.8, 0.65, 2.50)
                 },
                 {
                     creativeId: 'AD004',
@@ -1350,6 +1552,9 @@
                 }
             ];
 
+            // Determine winning variations
+            determineWinningVariations();
+
             renderTable();
             updateStats();
             populateFilters();
@@ -1382,31 +1587,37 @@
                 const row = document.createElement('tr');
                 row.className = ad.decision.toLowerCase();
 
+                // Render variation badge
+                let variationHtml = '';
+                if (ad.variation) {
+                    const winningClass = ad.isWinningVariation ? ' winning' : '';
+                    const crownHtml = ad.isWinningVariation ? '<span class="crown">👑</span> ' : '';
+                    variationHtml = `<span class="variation-badge${winningClass}">${crownHtml}${ad.variation}</span>`;
+                } else {
+                    variationHtml = '<span style="color: #64748B;">—</span>';
+                }
+
                 row.innerHTML = `
                     <td>${ad.creativeId}</td>
+                    <td>${variationHtml}</td>
                     <td>${ad.adsetName || 'Unknown'}</td>
                     <td>${ad.campaignName || 'Unknown'}</td>
                     <td>${ad.author}</td>
-                    <td class="link-cell"><a href="${ad.landingPage}" target="_blank">${ad.landingPage}</a></td>
                     <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
-                    <td>${ad.hypothesis}</td>
                     <td><span class="format-badge">${ad.format}</span></td>
                     <td>${ad.avatar}</td>
-                    <td>${ad.angle}</td>
                     <td class="metric ${ad.ctr >= 2.0 ? 'metric-good' : ad.ctr < 1.0 ? 'metric-bad' : ''}">${ad.ctr.toFixed(2)}</td>
                     <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
                     <td class="metric">${ad.spend.toFixed(2)}</td>
                     <td class="metric ${ad.roas >= 3.0 ? 'metric-good' : ad.roas < 1.5 ? 'metric-bad' : ''}">${ad.roas.toFixed(2)}</td>
-                    <td class="metric">${ad.frequency.toFixed(2)}</td>
-                    <td class="metric">${ad.purchases}</td>
-                    <td style="padding: 10px;">
-                        <div style="margin-bottom: 10px;">
-                            <div style="font-weight: 600; color: #4f46e5; margin-bottom: 4px; font-size: 11px; text-transform: uppercase;">📝 Your Learnings</div>
-                            <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" style="min-height: 60px;">${ad.learnings}</textarea>
+                    <td style="padding: 16px;">
+                        <div style="margin-bottom: 12px;">
+                            <div style="font-weight: 700; color: #A5B4FC; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">📝 Your Learnings</div>
+                            <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" placeholder="Enter insights..." style="min-height: 60px;">${ad.learnings}</textarea>
                         </div>
                         <div>
-                            <div style="font-weight: 600; color: #10b981; margin-bottom: 4px; font-size: 11px; text-transform: uppercase;">🤖 AI Analysis</div>
-                            <div style="font-size: 11px; color: #374151; padding: 8px; background: #f3f4f6; border-radius: 4px; border-left: 3px solid #10b981; line-height: 1.5;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
+                            <div style="font-weight: 700; color: #34D399; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">🤖 AI Analysis</div>
+                            <div style="font-size: 12px; color: #CBD5E1; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border-left: 3px solid #10B981; line-height: 1.6;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
                         </div>
                     </td>
                 `;
