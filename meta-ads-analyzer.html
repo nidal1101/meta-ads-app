@@ -863,6 +863,24 @@
 
         <div class="controls">
             <div class="control-group">
+                <label>Date Range</label>
+                <select id="dateRangeSelect" onchange="handleDateRangeChange()">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="60">Last 60 Days</option>
+                    <option value="90">Last 90 Days</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+            <div class="control-group hidden" id="customDateInputs">
+                <label>Start Date</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="control-group hidden" id="customDateInputsEnd">
+                <label>End Date</label>
+                <input type="date" id="endDate">
+            </div>
+            <div class="control-group">
                 <label>Filter by Decision</label>
                 <select id="filterDecision" onchange="applyFilters()">
                     <option value="">All Decisions</option>
@@ -2321,6 +2339,36 @@
                 avatarSelect.innerHTML += `<option value="${avatar}">${avatar}</option>`;
             });
         }
+
+        // Handle date range selection
+        function handleDateRangeChange() {
+            const select = document.getElementById('dateRangeSelect');
+            const customInputs = document.getElementById('customDateInputs');
+            const customInputsEnd = document.getElementById('customDateInputsEnd');
+            const startDateInput = document.getElementById('startDate');
+            const endDateInput = document.getElementById('endDate');
+
+            if (select.value === 'custom') {
+                customInputs.classList.remove('hidden');
+                customInputsEnd.classList.remove('hidden');
+            } else {
+                customInputs.classList.add('hidden');
+                customInputsEnd.classList.add('hidden');
+
+                // Calculate dates based on selection
+                const endDate = new Date();
+                const startDate = new Date();
+                startDate.setDate(endDate.getDate() - parseInt(select.value));
+
+                startDateInput.value = startDate.toISOString().split('T')[0];
+                endDateInput.value = endDate.toISOString().split('T')[0];
+            }
+        }
+
+        // Initialize date inputs on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            handleDateRangeChange();
+        });
 
         function applyFilters() {
             const decision = document.getElementById('filterDecision').value;
