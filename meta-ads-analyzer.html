@@ -431,7 +431,10 @@
             <h1>📈 Meta Ads Analyzer</h1>
             <div class="header-actions">
                 <button class="btn btn-secondary" onclick="toggleApiConfig()">⚙️ API Config</button>
+                <button class="btn btn-secondary" onclick="toggleCampaignSelector()">📂 Select Campaigns</button>
                 <button class="btn btn-primary" onclick="fetchAds()">🔄 Fetch Ads</button>
+                <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Import Learnings</button>
+                <input type="file" id="importFile" accept=".csv,.xlsx,.xls" style="display:none" onchange="importLearnings(event)">
                 <button class="btn btn-analyze" onclick="analyzeAds()">🤖 AI Analysis</button>
                 <button class="btn btn-secondary" onclick="exportToExcel()">📊 Export Excel</button>
             </div>
@@ -450,8 +453,29 @@
                 <label>Date Range (days)</label>
                 <input type="number" id="dateRange" value="30" min="1" max="90">
             </div>
+            <div class="control-group">
+                <label>Max Ads to Fetch</label>
+                <input type="number" id="maxAds" value="500" min="1" max="5000">
+            </div>
             <button class="btn btn-primary" onclick="saveApiConfig()">Save Config</button>
             <button class="btn btn-secondary" onclick="testApiConnection()" style="margin-left: 10px;">Test Connection</button>
+        </div>
+
+        <div class="api-config hidden" id="campaignSelector">
+            <div style="display: flex; flex-direction: column; gap: 15px; width: 100%;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <h3 style="margin: 0;">Select Campaigns to Analyze</h3>
+                    <button class="btn btn-secondary" onclick="loadCampaigns()">🔄 Load Campaigns</button>
+                </div>
+                <div id="campaignList" style="max-height: 300px; overflow-y: auto; border: 2px solid #e5e7eb; border-radius: 6px; padding: 10px;">
+                    <p style="color: #6b7280; text-align: center;">Click "Load Campaigns" to see available campaigns</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="selectAllCampaigns()">Select All</button>
+                    <button class="btn btn-secondary" onclick="deselectAllCampaigns()">Deselect All</button>
+                    <button class="btn btn-secondary" onclick="toggleCampaignSelector()">Close</button>
+                </div>
+            </div>
         </div>
 
         <div class="controls">
@@ -520,6 +544,8 @@
                 <thead>
                     <tr>
                         <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
+                        <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
+                        <th class="sortable" onclick="sortTable('campaignName')">Campaign</th>
                         <th class="sortable" onclick="sortTable('author')">Author</th>
                         <th class="sortable" onclick="sortTable('landingPage')">Landing Page</th>
                         <th class="sortable" onclick="sortTable('decision')">Decision</th>
@@ -645,11 +671,137 @@
             }
         }
 
+        // Global variables for campaigns
+        let availableCampaigns = [];
+        let selectedCampaignIds = [];
+
+        // Campaign selector functions
+        function toggleCampaignSelector() {
+            const selector = document.getElementById('campaignSelector');
+            selector.classList.toggle('hidden');
+        }
+
+        async function loadCampaigns() {
+            const token = localStorage.getItem('metaAccessToken');
+            let accountId = localStorage.getItem('metaAdAccountId');
+
+            if (!token || !accountId) {
+                alert('Please configure API settings first');
+                return;
+            }
+
+            accountId = accountId.trim();
+            if (!accountId.startsWith('act_')) {
+                accountId = 'act_' + accountId;
+            }
+
+            try {
+                const url = `https://graph.facebook.com/v21.0/${accountId}/campaigns?fields=id,name,status,objective&limit=500&access_token=${token}`;
+                const response = await fetch(url);
+                const data = await response.json();
+
+                if (data.error) {
+                    throw new Error(data.error.message);
+                }
+
+                availableCampaigns = data.data || [];
+                renderCampaignList();
+            } catch (error) {
+                alert('Error loading campaigns: ' + error.message);
+            }
+        }
+
+        function renderCampaignList() {
+            const list = document.getElementById('campaignList');
+            if (availableCampaigns.length === 0) {
+                list.innerHTML = '<p style="color: #6b7280; text-align: center;">No campaigns found</p>';
+                return;
+            }
+
+            list.innerHTML = availableCampaigns.map(campaign => `
+                <label style="display: flex; align-items: center; padding: 8px; border-bottom: 1px solid #f3f4f6; cursor: pointer;">
+                    <input type="checkbox"
+                           value="${campaign.id}"
+                           onchange="toggleCampaign('${campaign.id}')"
+                           ${selectedCampaignIds.includes(campaign.id) ? 'checked' : ''}
+                           style="margin-right: 10px;">
+                    <span style="flex: 1; font-size: 14px;">${campaign.name}</span>
+                    <span style="font-size: 11px; color: #6b7280; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${campaign.status}</span>
+                </label>
+            `).join('');
+        }
+
+        function toggleCampaign(campaignId) {
+            const index = selectedCampaignIds.indexOf(campaignId);
+            if (index > -1) {
+                selectedCampaignIds.splice(index, 1);
+            } else {
+                selectedCampaignIds.push(campaignId);
+            }
+        }
+
+        function selectAllCampaigns() {
+            selectedCampaignIds = availableCampaigns.map(c => c.id);
+            renderCampaignList();
+        }
+
+        function deselectAllCampaigns() {
+            selectedCampaignIds = [];
+            renderCampaignList();
+        }
+
+        // Import learnings from CSV
+        async function importLearnings(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n');
+                    const headers = lines[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+                    // Find column indices
+                    const idIndex = headers.findIndex(h => h.toLowerCase().includes('creative') && h.toLowerCase().includes('id'));
+                    const learningsIndex = headers.findIndex(h => h.toLowerCase().includes('learning'));
+
+                    if (idIndex === -1) {
+                        alert('Could not find "Creative ID" column in CSV');
+                        return;
+                    }
+
+                    let importedCount = 0;
+                    for (let i = 1; i < lines.length; i++) {
+                        if (!lines[i].trim()) continue;
+
+                        const values = lines[i].split(',').map(v => v.trim().replace(/"/g, ''));
+                        const creativeId = values[idIndex];
+                        const learnings = learningsIndex >= 0 ? values[learningsIndex] : '';
+
+                        // Find matching ad in current data
+                        const adIndex = adsData.findIndex(ad => ad.creativeId === creativeId);
+                        if (adIndex >= 0 && learnings) {
+                            adsData[adIndex].learnings = learnings;
+                            importedCount++;
+                        }
+                    }
+
+                    alert(`Successfully imported learnings for ${importedCount} ads!`);
+                    renderRows();
+                } catch (error) {
+                    alert('Error importing file: ' + error.message);
+                }
+            };
+            reader.readAsText(file);
+        }
+
         // Fetch Ads from Meta API
         async function fetchAds() {
             let token = localStorage.getItem('metaAccessToken');
             let accountId = localStorage.getItem('metaAdAccountId');
             const dateRange = parseInt(localStorage.getItem('metaDateRange') || '30');
+            const maxAds = parseInt(document.getElementById('maxAds')?.value || 500);
 
             if (!token || !accountId) {
                 alert('Please configure API settings first');
@@ -674,63 +826,89 @@
 
                 console.log('Fetching ads from account:', accountId);
                 console.log('Date range:', since, 'to', until);
+                console.log('Max ads:', maxAds);
 
-                // Step 1: Fetch basic ad data first
-                const basicFields = 'id,name,status,effective_status,created_time,creative{id,name,object_type,object_story_spec,image_url,video_id}';
-                const adsUrl = `https://graph.facebook.com/v21.0/${accountId}/ads?fields=${basicFields}&limit=100&access_token=${token}`;
-
-                console.log('Fetching ads...');
-                const adsResponse = await fetch(adsUrl);
-                const adsData_raw = await adsResponse.json();
-
-                if (adsData_raw.error) {
-                    // Provide helpful error messages
-                    let errorMsg = adsData_raw.error.message;
-                    if (adsData_raw.error.code === 190) {
-                        errorMsg = 'Access token is invalid or expired. Please get a new token from Meta Business Manager.';
-                    } else if (adsData_raw.error.code === 17) {
-                        errorMsg = 'API rate limit reached. Please wait a few minutes and try again.';
-                    } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
-                        errorMsg = `Cannot access account "${accountId}". Please verify:\n\n` +
-                                   `1. Account ID is correct (find it in Meta Ads Manager URL)\n` +
-                                   `2. Your access token has "ads_read" permission\n` +
-                                   `3. You have access to this ad account\n\n` +
-                                   `Original error: ${errorMsg}`;
-                    }
-                    throw new Error(errorMsg);
+                // Build filter for campaigns
+                let filterStr = '';
+                if (selectedCampaignIds.length > 0) {
+                    filterStr = `&filtering=[{"field":"campaign.id","operator":"IN","value":["${selectedCampaignIds.join('","')}"]}]`;
+                    console.log('Filtering by campaigns:', selectedCampaignIds);
                 }
 
-                if (!adsData_raw.data || adsData_raw.data.length === 0) {
-                    alert('No ads found in this account for the selected date range. Try increasing the date range or check if you have active ads.');
+                // Step 1: Fetch all ads with pagination
+                let allAds = [];
+                let nextUrl = `https://graph.facebook.com/v21.0/${accountId}/ads?fields=id,name,status,effective_status,created_time,adset{id,name},campaign{id,name},creative{id,name,object_type,object_story_spec,image_url,video_id}&limit=100${filterStr}&access_token=${token}`;
+
+                while (nextUrl && allAds.length < maxAds) {
+                    console.log(`Fetching batch... (${allAds.length} ads so far)`);
+                    const response = await fetch(nextUrl);
+                    const data = await response.json();
+
+                    if (data.error) {
+                        let errorMsg = data.error.message;
+                        if (data.error.code === 190) {
+                            errorMsg = 'Access token is invalid or expired. Please get a new token from Meta Business Manager.';
+                        } else if (data.error.code === 17) {
+                            errorMsg = 'API rate limit reached. Please wait a few minutes and try again.';
+                        } else if (errorMsg.includes('does not exist') || errorMsg.includes('cannot be loaded')) {
+                            errorMsg = `Cannot access account "${accountId}". Please verify:\n\n` +
+                                       `1. Account ID is correct (find it in Meta Ads Manager URL)\n` +
+                                       `2. Your access token has "ads_read" permission\n` +
+                                       `3. You have access to this ad account\n` +
+                                       `4. Your app is connected in Business Settings "Connected Assets"\n\n` +
+                                       `Original error: ${errorMsg}`;
+                        }
+                        throw new Error(errorMsg);
+                    }
+
+                    if (data.data && data.data.length > 0) {
+                        allAds = allAds.concat(data.data);
+                    }
+
+                    nextUrl = data.paging?.next || null;
+                }
+
+                if (allAds.length === 0) {
+                    alert('No ads found in this account for the selected criteria. Try adjusting filters or date range.');
                     hideLoading();
                     return;
                 }
 
-                console.log(`Found ${adsData_raw.data.length} ads, fetching insights...`);
+                console.log(`Found ${allAds.length} ads total, fetching insights...`);
 
-                // Step 2: Fetch insights for each ad
-                const adsWithInsights = await Promise.all(
-                    adsData_raw.data.slice(0, 50).map(async (ad) => { // Limit to 50 to avoid rate limits
-                        try {
-                            const insightsFields = 'clicks,impressions,spend,cpc,ctr,frequency,actions,action_values';
-                            const insightsUrl = `https://graph.facebook.com/v21.0/${ad.id}/insights?fields=${insightsFields}&time_range={'since':'${since}','until':'${until}'}&access_token=${token}`;
+                // Step 2: Fetch insights for each ad (in batches)
+                const batchSize = 50;
+                const adsWithInsights = [];
 
-                            const insightsResponse = await fetch(insightsUrl);
-                            const insightsData = await insightsResponse.json();
+                for (let i = 0; i < allAds.length; i += batchSize) {
+                    const batch = allAds.slice(i, i + batchSize);
+                    console.log(`Fetching insights batch ${Math.floor(i/batchSize) + 1}/${Math.ceil(allAds.length/batchSize)}...`);
 
-                            return {
-                                ...ad,
-                                insights: insightsData.data?.[0] || null
-                            };
-                        } catch (err) {
-                            console.warn(`Could not fetch insights for ad ${ad.id}:`, err);
-                            return {
-                                ...ad,
-                                insights: null
-                            };
-                        }
-                    })
-                );
+                    const batchResults = await Promise.all(
+                        batch.map(async (ad) => {
+                            try {
+                                const insightsFields = 'clicks,impressions,spend,cpc,ctr,frequency,actions,action_values';
+                                const insightsUrl = `https://graph.facebook.com/v21.0/${ad.id}/insights?fields=${insightsFields}&time_range={'since':'${since}','until':'${until}'}&access_token=${token}`;
+
+                                const insightsResponse = await fetch(insightsUrl);
+                                const insightsData = await insightsResponse.json();
+
+                                return {
+                                    ...ad,
+                                    insights: insightsData.data?.[0] || null
+                                };
+                            } catch (err) {
+                                console.warn(`Could not fetch insights for ad ${ad.id}:`, err);
+                                return {
+                                    ...ad,
+                                    insights: null
+                                };
+                            }
+                        })
+                    );
+
+                    adsWithInsights.push(...batchResults);
+                }
 
                 // Transform API data to our format
                 adsData = adsWithInsights.map((ad, index) => {
@@ -752,6 +930,8 @@
 
                     return {
                         creativeId: ad.id,
+                        adsetName: ad.adset?.name || 'Unknown',
+                        campaignName: ad.campaign?.name || 'Unknown',
                         author: extractAuthor(ad.name),
                         landingPage: landingPage,
                         decision: classifyDecision(roas, parseFloat(insights.ctr || 0)),
@@ -824,6 +1004,8 @@
             adsData = [
                 {
                     creativeId: 'AD001',
+                    adsetName: 'Fitness Transformation - 25-40',
+                    campaignName: 'Q4 Fitness Campaign',
                     author: 'John Smith',
                     landingPage: 'https://example.com/product-a',
                     decision: 'Winner',
@@ -1028,6 +1210,8 @@
 
                 row.innerHTML = `
                     <td>${ad.creativeId}</td>
+                    <td>${ad.adsetName || 'Unknown'}</td>
+                    <td>${ad.campaignName || 'Unknown'}</td>
                     <td>${ad.author}</td>
                     <td class="link-cell"><a href="${ad.landingPage}" target="_blank">${ad.landingPage}</a></td>
                     <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
