@@ -802,6 +802,271 @@
         .hypothesis-input::placeholder {
             color: #64748B;
         }
+
+        /* Chat Interface */
+        .chat-toggle {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            border: none;
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .chat-toggle:hover {
+            transform: scale(1.1);
+            box-shadow: 0 12px 40px rgba(99, 102, 241, 0.6);
+        }
+
+        .chat-toggle svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+        }
+
+        .chat-panel {
+            position: fixed;
+            right: -450px;
+            top: 0;
+            width: 450px;
+            height: 100vh;
+            background: rgba(15, 15, 35, 0.98);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: -10px 0 40px rgba(0, 0, 0, 0.3);
+            transition: right 0.3s ease;
+            z-index: 999;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-panel.open {
+            right: 0;
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: rgba(99, 102, 241, 0.1);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chat-header h3 {
+            margin: 0;
+            color: #A5B4FC;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .chat-close {
+            background: none;
+            border: none;
+            color: #94A3B8;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .chat-close:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-message {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-width: 85%;
+        }
+
+        .chat-message.user {
+            align-self: flex-end;
+            align-items: flex-end;
+        }
+
+        .chat-message.assistant {
+            align-self: flex-start;
+        }
+
+        .chat-message-content {
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+
+        .chat-message.user .chat-message-content {
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            color: white;
+        }
+
+        .chat-message.assistant .chat-message-content {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #E2E8F0;
+        }
+
+        .chat-message-time {
+            font-size: 11px;
+            color: #64748B;
+            padding: 0 8px;
+        }
+
+        .chat-input-area {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .chat-input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        .chat-input {
+            flex: 1;
+            min-height: 44px;
+            max-height: 120px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            color: #E2E8F0;
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            overflow-y: auto;
+        }
+
+        .chat-input:focus {
+            outline: none;
+            border-color: #6366F1;
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .chat-send-btn {
+            padding: 12px 20px;
+            background: linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            min-width: 80px;
+        }
+
+        .chat-send-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+        }
+
+        .chat-send-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .chat-api-setup {
+            padding: 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            margin: 20px;
+        }
+
+        .chat-api-setup h4 {
+            margin: 0 0 12px 0;
+            color: #FCA5A5;
+            font-size: 14px;
+        }
+
+        .chat-api-setup input {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            color: #E2E8F0;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        .chat-api-setup button {
+            width: 100%;
+            padding: 10px;
+            background: #10B981;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .chat-typing {
+            display: flex;
+            gap: 4px;
+            padding: 12px 16px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            width: fit-content;
+        }
+
+        .chat-typing span {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #6366F1;
+            animation: typing 1.4s infinite;
+        }
+
+        .chat-typing span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .chat-typing span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.7;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -1002,6 +1267,41 @@
                 <button class="btn btn-secondary" onclick="hideAnalysis()">Close</button>
             </div>
             <div class="insights-grid" id="insightsGrid">
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Chat Assistant -->
+    <button class="chat-toggle" onclick="toggleChat()" id="chatToggle">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+            <circle cx="12" cy="10" r="1"/>
+            <circle cx="8" cy="10" r="1"/>
+            <circle cx="16" cy="10" r="1"/>
+        </svg>
+    </button>
+
+    <div class="chat-panel" id="chatPanel">
+        <div class="chat-header">
+            <h3>AI Strategy Assistant</h3>
+            <button class="chat-close" onclick="toggleChat()">×</button>
+        </div>
+
+        <div id="chatApiSetup" class="chat-api-setup">
+            <h4>Setup Required</h4>
+            <p style="color: #CBD5E1; font-size: 13px; margin-bottom: 12px;">Enter your Anthropic API key to enable AI chat. <a href="https://console.anthropic.com/settings/keys" target="_blank" style="color: #6366F1;">Get API Key</a></p>
+            <input type="password" id="anthropicApiKey" placeholder="sk-ant-...">
+            <button onclick="saveAnthropicKey()">Save API Key</button>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be appended here -->
+        </div>
+
+        <div class="chat-input-area">
+            <div class="chat-input-wrapper">
+                <textarea class="chat-input" id="chatInput" placeholder="Ask me anything about your ads data..." rows="1" onkeydown="handleChatKeydown(event)"></textarea>
+                <button class="chat-send-btn" id="chatSendBtn" onclick="sendChatMessage()">Send</button>
             </div>
         </div>
     </div>
@@ -2735,9 +3035,257 @@
             // Will be handled by renderTable
         }
 
+        // ========== AI CHAT ASSISTANT ==========
+        let chatHistory = [];
+        let anthropicApiKey = localStorage.getItem('anthropicApiKey') || '';
+
+        function toggleChat() {
+            const panel = document.getElementById('chatPanel');
+            panel.classList.toggle('open');
+
+            // Load welcome message on first open
+            if (panel.classList.contains('open') && chatHistory.length === 0 && anthropicApiKey) {
+                addWelcomeMessage();
+            }
+        }
+
+        function saveAnthropicKey() {
+            const key = document.getElementById('anthropicApiKey').value.trim();
+            if (!key) {
+                alert('Please enter a valid API key');
+                return;
+            }
+            if (!key.startsWith('sk-ant-')) {
+                alert('Invalid API key format. Should start with sk-ant-');
+                return;
+            }
+
+            anthropicApiKey = key;
+            localStorage.setItem('anthropicApiKey', key);
+            document.getElementById('chatApiSetup').style.display = 'none';
+            addWelcomeMessage();
+        }
+
+        function addWelcomeMessage() {
+            const welcomeMsg = {
+                role: 'assistant',
+                content: `Hey! I'm your AI strategy assistant. I have full access to your Meta ads data and can help you with:
+
+• Analyzing performance trends and patterns
+• Identifying winning angles and hooks
+• Recommending optimizations and tests
+• Explaining what's working (and what's not)
+• Strategic advice on scaling winners
+
+Ask me anything about your ad performance!`
+            };
+            chatHistory.push(welcomeMsg);
+            displayMessage(welcomeMsg);
+        }
+
+        function handleChatKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendChatMessage();
+            }
+        }
+
+        async function sendChatMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            if (!anthropicApiKey) {
+                alert('Please set up your Anthropic API key first');
+                return;
+            }
+
+            // Clear input
+            input.value = '';
+
+            // Add user message to UI
+            const userMsg = { role: 'user', content: message };
+            chatHistory.push(userMsg);
+            displayMessage(userMsg);
+
+            // Show typing indicator
+            showTypingIndicator();
+
+            // Disable send button
+            document.getElementById('chatSendBtn').disabled = true;
+
+            try {
+                // Prepare context with ads data
+                const context = prepareAdsContext();
+
+                // Call Anthropic API
+                const response = await fetch('https://api.anthropic.com/v1/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-api-key': anthropicApiKey,
+                        'anthropic-version': '2023-06-01'
+                    },
+                    body: JSON.stringify({
+                        model: 'claude-3-5-sonnet-20241022',
+                        max_tokens: 2048,
+                        system: `You are an expert Meta ads strategist and performance marketer. You help analyze ad performance data and provide strategic recommendations.
+
+Current Context:
+${context}
+
+Always be:
+- Strategic and data-driven in your analysis
+- Specific with actionable recommendations
+- Honest about what the data shows
+- Focused on ROAS, CPA, CTR, and creative performance
+- Aware of the user's learnings and past insights`,
+                        messages: chatHistory.map(msg => ({
+                            role: msg.role,
+                            content: msg.content
+                        }))
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error?.message || 'API request failed');
+                }
+
+                const data = await response.json();
+                const assistantMsg = {
+                    role: 'assistant',
+                    content: data.content[0].text
+                };
+
+                chatHistory.push(assistantMsg);
+                removeTypingIndicator();
+                displayMessage(assistantMsg);
+
+            } catch (error) {
+                removeTypingIndicator();
+                displayMessage({
+                    role: 'assistant',
+                    content: `Error: ${error.message}. Please check your API key and try again.`
+                });
+                console.error('Chat error:', error);
+            } finally {
+                document.getElementById('chatSendBtn').disabled = false;
+                input.focus();
+            }
+        }
+
+        function prepareAdsContext() {
+            if (adsData.length === 0) {
+                return 'No ads data loaded yet. User should fetch data from Meta API first.';
+            }
+
+            // Summarize ads data
+            const activeAds = adsData.filter(ad => ad.status === 'ACTIVE');
+            const totalSpend = adsData.reduce((sum, ad) => sum + ad.spend, 0);
+            const avgROAS = adsData.reduce((sum, ad) => sum + ad.roas, 0) / adsData.length;
+            const winners = adsData.filter(ad => ad.decision === 'Winner');
+
+            // Top performers
+            const topSpenders = [...adsData]
+                .sort((a, b) => b.spend - a.spend)
+                .slice(0, 5)
+                .map(ad => `  - ${ad.adsetName}: $${ad.spend.toFixed(2)} spent, ${ad.roas.toFixed(2)}x ROAS, ${ad.ctr.toFixed(2)}% CTR`)
+                .join('\n');
+
+            // Performance by author
+            const authorStats = {};
+            adsData.forEach(ad => {
+                if (!authorStats[ad.author]) {
+                    authorStats[ad.author] = { spend: 0, roas: 0, count: 0 };
+                }
+                authorStats[ad.author].spend += ad.spend;
+                authorStats[ad.author].roas += ad.roas;
+                authorStats[ad.author].count += 1;
+            });
+
+            const authorSummary = Object.entries(authorStats)
+                .map(([author, stats]) => `  - ${author}: $${stats.spend.toFixed(2)} total spend, ${(stats.roas / stats.count).toFixed(2)}x avg ROAS, ${stats.count} adsets`)
+                .join('\n');
+
+            // Learnings from top performers
+            const keyLearnings = winners
+                .filter(ad => ad.learnings)
+                .slice(0, 3)
+                .map(ad => `  - ${ad.adsetName}: ${ad.learnings}`)
+                .join('\n');
+
+            return `
+ACCOUNT SUMMARY:
+- Total Adsets: ${adsData.length} (${activeAds.length} active)
+- Total Spend: $${totalSpend.toFixed(2)}
+- Average ROAS: ${avgROAS.toFixed(2)}x
+- Winners: ${winners.length}
+
+TOP 5 SPENDING ADSETS:
+${topSpenders}
+
+PERFORMANCE BY AUTHOR:
+${authorSummary}
+
+KEY LEARNINGS FROM WINNERS:
+${keyLearnings || '  No learnings documented yet'}
+`;
+        }
+
+        function displayMessage(msg) {
+            const messagesDiv = document.getElementById('chatMessages');
+            const messageEl = document.createElement('div');
+            messageEl.className = `chat-message ${msg.role}`;
+
+            const time = new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+
+            // Format message content (support basic markdown-like formatting)
+            let formattedContent = msg.content
+                .replace(/\n/g, '<br>')
+                .replace(/•/g, '•');
+
+            messageEl.innerHTML = `
+                <div class="chat-message-content">${formattedContent}</div>
+                <div class="chat-message-time">${time}</div>
+            `;
+
+            messagesDiv.appendChild(messageEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('chatMessages');
+            const typingEl = document.createElement('div');
+            typingEl.className = 'chat-message assistant';
+            typingEl.id = 'typingIndicator';
+            typingEl.innerHTML = `
+                <div class="chat-typing">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            `;
+            messagesDiv.appendChild(typingEl);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function removeTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+
         // Initialize
         window.addEventListener('DOMContentLoaded', () => {
             loadApiConfig();
+
+            // Check if Anthropic API key is saved
+            if (anthropicApiKey) {
+                document.getElementById('chatApiSetup').style.display = 'none';
+            }
         });
     </script>
 </body>
