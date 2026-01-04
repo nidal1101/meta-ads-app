@@ -608,93 +608,108 @@
             margin-top: 8px;
         }
 
-        /* Performance Banner */
+        /* Daily Insights Banner */
         .performance-banner {
-            padding: 24px 40px;
-            background: rgba(99, 102, 241, 0.05);
-            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+            padding: 20px 40px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.3);
+            border-left: 4px solid #6366F1;
         }
 
         .performance-banner h2 {
-            font-size: 18px;
+            font-size: 14px;
             font-weight: 700;
-            color: #E2E8F0;
-            margin-bottom: 16px;
+            color: #94A3B8;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        .performance-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 16px;
-        }
-
-        .performance-card {
+        .daily-insights {
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
+            border-radius: 8px;
             padding: 16px;
-            transition: all 0.2s ease;
         }
 
-        .performance-card:hover {
-            background: rgba(255, 255, 255, 0.05);
-            transform: translateY(-2px);
-        }
-
-        .performance-card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-        }
-
-        .performance-card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #94A3B8;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .performance-status {
-            padding: 4px 8px;
-            border-radius: 6px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .performance-status.winning {
-            background: rgba(16, 185, 129, 0.2);
-            color: #34D399;
-        }
-
-        .performance-status.struggling {
-            background: rgba(239, 68, 68, 0.2);
-            color: #FCA5A5;
-        }
-
-        .performance-metric {
-            display: flex;
-            justify-content: space-between;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            font-size: 13px;
-        }
-
-        .performance-metric:last-child {
-            border-bottom: none;
-        }
-
-        .performance-metric-label {
-            color: #CBD5E1;
-        }
-
-        .performance-metric-value {
-            font-weight: 700;
+        .insight-text {
             color: #E2E8F0;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .insight-text ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .insight-text li {
+            margin: 6px 0;
+        }
+
+        .read-more-btn {
+            color: #A5B4FC;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 4px 0;
+            margin-top: 8px;
+            text-decoration: underline;
+        }
+
+        .read-more-btn:hover {
+            color: #6366F1;
+        }
+
+        .insight-details {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            color: #CBD5E1;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .insight-details.hidden {
+            display: none;
+        }
+
+        /* Fixed columns for table */
+        .table-wrapper {
+            position: relative;
+            overflow-x: auto;
+        }
+
+        .table-wrapper table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .fixed-column {
+            position: sticky;
+            background: rgba(15, 15, 35, 0.95);
+            z-index: 2;
+        }
+
+        .fixed-column.col-adset {
+            left: 0;
+            min-width: 250px;
+        }
+
+        .fixed-column.col-lp {
+            left: 250px;
+            min-width: 120px;
+        }
+
+        .fixed-column.col-learnings {
+            right: 0;
+            min-width: 350px;
+        }
+
+        thead .fixed-column {
+            z-index: 3;
         }
     </style>
 </head>
@@ -788,11 +803,17 @@
             <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
         </div>
 
-        <!-- Performance Banner -->
+        <!-- Daily Insights Banner -->
         <div class="performance-banner hidden" id="performanceBanner">
-            <h2>Performance Overview by Author</h2>
-            <div class="performance-grid" id="performanceGrid">
-                <!-- Performance cards will be inserted here -->
+            <h2>Daily Performance Insights</h2>
+            <div class="daily-insights">
+                <div class="insight-text" id="dailyInsightText">
+                    <!-- AI-generated insights will appear here -->
+                </div>
+                <button class="read-more-btn" id="readMoreBtn" onclick="toggleInsightDetails()">Read More</button>
+                <div class="insight-details hidden" id="insightDetails">
+                    <!-- Detailed insights will appear here -->
+                </div>
             </div>
         </div>
 
@@ -1442,83 +1463,102 @@
             }
         }
 
-        // Generate performance overview banner
-        function generatePerformanceBanner() {
+        // Generate daily performance insights
+        function generateDailyInsights() {
             const banner = document.getElementById('performanceBanner');
-            const grid = document.getElementById('performanceGrid');
+            const insightText = document.getElementById('dailyInsightText');
+            const insightDetails = document.getElementById('insightDetails');
 
             if (adsData.length === 0) {
                 banner.classList.add('hidden');
                 return;
             }
 
-            // Group by author
-            const authorStats = {};
+            // Calculate key metrics
+            const totalSpend = adsData.reduce((sum, ad) => sum + ad.spend, 0);
+            const avgROAS = adsData.reduce((sum, ad) => sum + ad.roas, 0) / adsData.length;
+            const TARGET_CPA = 126.99;
 
-            adsData.forEach(ad => {
-                const author = ad.author || 'Unknown';
-                if (!authorStats[author]) {
-                    authorStats[author] = {
-                        totalAds: 0,
-                        totalSpend: 0,
-                        totalRevenue: 0,
-                        winners: 0,
-                        avgCTR: 0,
-                        avgROAS: 0
-                    };
+            // Find top spending adsets
+            const topSpenders = adsData
+                .filter(ad => ad.spend > 0)
+                .sort((a, b) => b.spend - a.spend)
+                .slice(0, 5);
+
+            // Find profitable adsets (good CPA)
+            const profitableAds = adsData.filter(ad => ad.spend > 0 && ad.spend < TARGET_CPA && ad.roas >= 2.0);
+
+            // Find new adsets (low spend)
+            const newAds = adsData.filter(ad => ad.spend < 50 && ad.spend > 0);
+
+            // Find adsets picking up spend
+            const pickingUpSpend = adsData.filter(ad => ad.spend >= 50 && ad.spend < 200);
+
+            // Generate insights
+            let insights = '<ul>';
+
+            // Top spenders
+            if (topSpenders.length > 0) {
+                const topAd = topSpenders[0];
+                if (topAd.roas >= 2.0 && topAd.spend < TARGET_CPA) {
+                    insights += `<li><strong>Top Performer:</strong> ${topAd.adsetName} - $${topAd.spend.toFixed(2)} spend, ${topAd.roas.toFixed(2)}x ROAS (under CPA target - SCALE THIS)</li>`;
+                } else if (topAd.roas < 1.5) {
+                    insights += `<li><strong>Warning:</strong> Top spender ${topAd.adsetName} ($${topAd.spend.toFixed(2)}) has low ROAS (${topAd.roas.toFixed(2)}x) - Consider pausing</li>`;
+                } else {
+                    insights += `<li><strong>Top Spender:</strong> ${topAd.adsetName} - $${topAd.spend.toFixed(2)} spend, ${topAd.roas.toFixed(2)}x ROAS</li>`;
                 }
+            }
 
-                authorStats[author].totalAds++;
-                authorStats[author].totalSpend += ad.spend;
-                authorStats[author].totalRevenue += (ad.spend * ad.roas);
-                if (ad.decision === 'Winner') authorStats[author].winners++;
-                authorStats[author].avgCTR += ad.ctr;
-                authorStats[author].avgROAS += ad.roas;
+            // Profitable adsets
+            if (profitableAds.length > 0) {
+                insights += `<li><strong>Scaling Opportunities:</strong> ${profitableAds.length} adset${profitableAds.length > 1 ? 's' : ''} with good CPA and ROAS - ready to scale</li>`;
+            }
+
+            // New adsets
+            if (newAds.length > 0) {
+                insights += `<li><strong>New Adsets:</strong> ${newAds.length} adset${newAds.length > 1 ? 's are' : ' is'} in early testing phase (under $50 spend)</li>`;
+            } else {
+                insights += `<li><strong>New Adsets:</strong> No new adsets getting spend - consider launching fresh tests</li>`;
+            }
+
+            insights += '</ul>';
+
+            insightText.innerHTML = insights;
+
+            // Detailed insights
+            let details = '<strong>Detailed Breakdown:</strong><br><br>';
+
+            details += '<strong>Top 3 Spending Adsets:</strong><ul>';
+            topSpenders.slice(0, 3).forEach((ad, i) => {
+                details += `<li>${i+1}. ${ad.adsetName} - $${ad.spend.toFixed(2)} | ROAS: ${ad.roas.toFixed(2)}x | CTR: ${ad.ctr.toFixed(2)}%</li>`;
             });
+            details += '</ul><br>';
 
-            // Calculate averages
-            Object.keys(authorStats).forEach(author => {
-                const stats = authorStats[author];
-                stats.avgCTR = stats.avgCTR / stats.totalAds;
-                stats.avgROAS = stats.avgROAS / stats.totalAds;
-            });
+            if (profitableAds.length > 0) {
+                details += '<strong>Profitable Adsets (Good CPA + ROAS):</strong><ul>';
+                profitableAds.slice(0, 3).forEach(ad => {
+                    details += `<li>${ad.adsetName} - $${ad.spend.toFixed(2)} spend | ${ad.roas.toFixed(2)}x ROAS</li>`;
+                });
+                details += '</ul><br>';
+            }
 
-            // Generate cards
-            grid.innerHTML = '';
-            Object.keys(authorStats).sort((a, b) => authorStats[b].avgROAS - authorStats[a].avgROAS).forEach(author => {
-                const stats = authorStats[author];
-                const isWinning = stats.avgROAS >= 2.0;
-                const statusClass = isWinning ? 'winning' : 'struggling';
-                const statusText = isWinning ? 'Winning' : 'Needs Work';
+            details += `<strong>Account Overview:</strong><br>`;
+            details += `Total Spend: $${totalSpend.toFixed(2)}<br>`;
+            details += `Average ROAS: ${avgROAS.toFixed(2)}x<br>`;
+            details += `Total Adsets: ${adsData.length}<br>`;
+            details += `Winners: ${adsData.filter(ad => ad.decision === 'Winner').length}`;
 
-                const card = document.createElement('div');
-                card.className = 'performance-card';
-                card.innerHTML = `
-                    <div class="performance-card-header">
-                        <span class="performance-card-title">${author}</span>
-                        <span class="performance-status ${statusClass}">${statusText}</span>
-                    </div>
-                    <div class="performance-metric">
-                        <span class="performance-metric-label">Avg ROAS</span>
-                        <span class="performance-metric-value">${stats.avgROAS.toFixed(2)}x</span>
-                    </div>
-                    <div class="performance-metric">
-                        <span class="performance-metric-label">Total Spend</span>
-                        <span class="performance-metric-value">$${stats.totalSpend.toFixed(2)}</span>
-                    </div>
-                    <div class="performance-metric">
-                        <span class="performance-metric-label">Winners</span>
-                        <span class="performance-metric-value">${stats.winners} / ${stats.totalAds}</span>
-                    </div>
-                    <div class="performance-metric">
-                        <span class="performance-metric-label">Avg CTR</span>
-                        <span class="performance-metric-value">${stats.avgCTR.toFixed(2)}%</span>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
+            insightDetails.innerHTML = details;
 
             banner.classList.remove('hidden');
+        }
+
+        function toggleInsightDetails() {
+            const details = document.getElementById('insightDetails');
+            const btn = document.getElementById('readMoreBtn');
+
+            details.classList.toggle('hidden');
+            btn.textContent = details.classList.contains('hidden') ? 'Read More' : 'Read Less';
         }
 
         // Helper functions to extract data from ad names
@@ -1528,21 +1568,64 @@
             return match ? match[1].toUpperCase() : '';
         }
 
-        function extractVariation(name) {
-            // Extract variation like 172A, 172B, 172C from ad name or adset name
-            const match = name.match(/(\d{3}[A-Z])/);
-            if (match) return match[1];
+        function extractVariation(adsetName) {
+            // Extract variation number from middle of adset name
+            // Examples: "listicle1 | 172 | Gary" → "172"
+            //           "US | 18+ Broad | 262Pc Survival Kit | 023" → "023"
 
-            // Also try simpler patterns like just A, B, C at the end
-            const simpleMatch = name.match(/\s+([A-C])$/i);
-            if (simpleMatch) return simpleMatch[1].toUpperCase();
+            const parts = adsetName.split('|').map(p => p.trim());
+
+            // Look for a number in the middle parts (usually position 1 or 2)
+            for (let i = 0; i < parts.length; i++) {
+                // Match pure numbers or numbers followed by text
+                const numberMatch = parts[i].match(/^(\d+)/);
+                if (numberMatch && numberMatch[1].length >= 3) {
+                    return numberMatch[1];
+                }
+            }
 
             return '';
         }
 
-        function extractAuthor(name) {
-            const match = name.match(/\[([^\]]+)\]/);
-            return match ? match[1] : 'Unknown';
+        function extractAuthor(adsetName) {
+            // Extract author from end of adset name or default to "Nidal"
+            // Examples: "listicle1 | 172 | Gary" → "Gary"
+            //           "US | 18+ Broad | 262Pc Survival Kit | 023" → "Nidal" (no author found)
+
+            const knownAuthors = ['gary', 'roman', 'brandon', 'nidal', 'riley'];
+            const parts = adsetName.toLowerCase().split('|').map(p => p.trim());
+
+            // Check last part first
+            const lastPart = parts[parts.length - 1];
+            for (const author of knownAuthors) {
+                if (lastPart.includes(author)) {
+                    return author.charAt(0).toUpperCase() + author.slice(1);
+                }
+            }
+
+            // Check all parts
+            for (const part of parts) {
+                for (const author of knownAuthors) {
+                    if (part.includes(author)) {
+                        return author.charAt(0).toUpperCase() + author.slice(1);
+                    }
+                }
+            }
+
+            // Default to Nidal
+            return 'Nidal';
+        }
+
+        function extractLandingPageName(adsetName) {
+            // Extract landing page name from first part of adset name
+            // Example: "listicle1 | 172 | Gary" → "listicle1"
+
+            const parts = adsetName.split('|').map(p => p.trim());
+            if (parts.length > 0) {
+                return parts[0];
+            }
+
+            return '';
         }
 
         function extractHypothesis(name) {
@@ -1608,6 +1691,11 @@
 
         // Generate AI insights based on performance metrics
         function generateAIInsights(spend, roas, ctr, cpc) {
+            // Check spend threshold
+            if (spend < 100) {
+                return 'Not enough spend to analyze (minimum $100 required)';
+            }
+
             const TARGET_CPA = 126.99;
             const insights = [];
 
@@ -1876,8 +1964,8 @@
             table.style.display = 'table';
             emptyState.style.display = 'none';
 
-            // Generate performance banner
-            generatePerformanceBanner();
+            // Generate daily insights
+            generateDailyInsights();
 
             filteredData = [...adsData];
             applyFilters();
