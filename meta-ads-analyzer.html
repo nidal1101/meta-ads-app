@@ -544,7 +544,6 @@
                 <thead>
                     <tr>
                         <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
-                        <th class="sortable" onclick="sortTable('batchNumber')">Batch #</th>
                         <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
                         <th class="sortable" onclick="sortTable('campaignName')">Campaign</th>
                         <th class="sortable" onclick="sortTable('author')">Author</th>
@@ -560,7 +559,7 @@
                         <th class="sortable" onclick="sortTable('roas')">ROAS</th>
                         <th class="sortable" onclick="sortTable('frequency')">Frequency</th>
                         <th class="sortable" onclick="sortTable('purchases')">Purchases</th>
-                        <th>Learnings</th>
+                        <th style="min-width: 300px;">Learnings & AI Insights</th>
                     </tr>
                 </thead>
                 <tbody id="adsTableBody">
@@ -582,6 +581,21 @@
         let adsData = [];
         let filteredData = [];
         let currentSort = { column: null, direction: 'asc' };
+
+        // Pre-loaded tracker data from manual tracking
+        const trackerData = {
+            '023': { author: 'Nidal', hypothesis: 'Is your family prepared for disaster?', avatar: 'The Family Protector', angle: 'Appealing to family protector avatar using emotional pull on being prepared for at least 72 hours', learnings: 'Keep title simple - image with short title and 2 lines of subtext performed the best - emotional baiting of disaster striking and not being prepared within 72 hours helped. Most spend going to this ad daily.', decision: 'Launched' },
+            '024': { author: 'Nidal', hypothesis: '262 emergency tools in one bag that keeps you ready and prepared when you need it most', avatar: 'The Preparedness Minded', angle: 'Testing subheadings underneath title which remained the same throughout 5 varaints', learnings: 'Getting a good amount of spend with a lower CPC than 023 and higher CTR. Frequency is 1.3 (same as 023) so its serving the same audience.', decision: 'Launched' },
+            '023A.1': { author: 'Nidal', hypothesis: 'Is your family prepared for disaster? List of main tools included.', avatar: 'The Family Protector', angle: 'Testing visuals based on BATCH#023', learnings: 'Freq = 1.16 (closer to propsecting) CPC = $1.42 (lowest cpc yet) sales = 1 (already profitable) this aligns with our post-purchase survey of outlining product features which is convincing more customers to buy.', decision: 'Launched' },
+            '026': { author: 'Nidal', hypothesis: 'Is your family prepared for disaster? Paired with prospecting landing page to grow information.', avatar: 'The Family Protector', angle: 'Launched winning ad variations from 023, 024, 023-VISUALS and paired with prospecting landing page', learnings: 'New landing page has greater average session duration than original page (210 seconds vs 45 seconds) but no sales yet (only 1 ATC). Not enough evidence to move most of ads path to new prospecting page.', decision: 'Launched' },
+            '027': { author: 'Riley', hypothesis: 'How to: build a shelter using the axe', avatar: 'The Outdoor Enthusiast', angle: 'Riley made more of a prospecting video to show users how to build shelter with the 10-in-one axe', learnings: '', decision: 'Launched' },
+            '028': { author: 'Nidal', hypothesis: 'Is your family prepared for disaster? List of main tools included. Testing more emotional subtext', avatar: 'The Family Protector', angle: 'We discovered what elements work in 023, 024, 023-VISUALS. Now we put them together', learnings: 'Winning element: Your Children\'s Safety Isn\'t Worth Saving $20 on Cheap Gear', decision: 'Launched' },
+            '029': { author: 'Nidal', hypothesis: 'Up for a challenge? Are you a real or fake bushcrafter?', avatar: 'Bushcrafter', angle: 'Testing a new user segment of bushcrafters who want to take on a new challenge', learnings: 'Title: SOLO-SURVIVALIST. Subtext: Most outdoor enthusiasts need constant comfort and pleasure. Can you survive with 262 pieces of gear that will cover you for 72-hours? Popped a sale but bad soft metrics.', decision: 'Launched' },
+            '030': { author: 'Nidal', hypothesis: 'NEW CONCEPT: Review-based ad. Reassuring warmer traffic on reasons for purchase', avatar: 'The Practical Gift Giver', angle: 'Testing new concept for retargeting warmer traffic', learnings: '', decision: 'Launched' },
+            '031': { author: 'Nidal', hypothesis: 'In case of a disaster, are you prepared for an emergency? Will you survive 72 hours?', avatar: 'The Preparedness Minded', angle: 'Testing emergency preparedness angle', learnings: '', decision: 'Launched' },
+            '079': { author: 'Nidal', hypothesis: 'Here\'s why your "Survival Kit" won\'t keep you alive for 72 hours...', avatar: 'The Beginner Prepper', angle: 'Launching this to build on 060. Changing CTA testing subtexts', learnings: 'Popped a sale - this format is effective. $4 CPC $50 CPM 1.26% CTR. Popped 4 sales profitable. 5% CVR high ATC% keep pushing on this angle need to improve on ad for better results.', decision: 'Launched' },
+            '087': { author: 'Nidal', hypothesis: 'LIVE LONGER hook', avatar: '', angle: 'LIVE LONGER hook', learnings: 'Profitable ad. Live longer hook is working people are interested in it. Spent $150 $2.43 CPC 2% CTR so people are clicking thru. Popped 2 sales. Build off of this. Probably needs its own congruent page.', decision: 'Launched' }
+        };
 
         // API Configuration
         function toggleApiConfig() {
@@ -1008,26 +1022,37 @@
                                      ad.creative.object_story_spec?.video_data?.link || '';
                     }
 
-                    return {
+                    // Extract batch number and merge with tracker data
+                    const batchNumber = extractBatchNumber(ad.name);
+                    const trackerInfo = trackerData[batchNumber] || {};
+
+                    // Build base ad object
+                    const ctrVal = parseFloat(insights.ctr || 0);
+                    const cpcVal = parseFloat(insights.cpc || 0);
+
+                    const adData = {
                         creativeId: ad.id,
-                        batchNumber: extractBatchNumber(ad.name),
+                        batchNumber: batchNumber,
                         adsetName: ad.adset?.name || 'Unknown',
                         campaignName: ad.campaign?.name || 'Unknown',
-                        author: extractAuthor(ad.name),
+                        author: trackerInfo.author || extractAuthor(ad.name),
                         landingPage: landingPage,
-                        decision: classifyDecision(roas, parseFloat(insights.ctr || 0)),
-                        hypothesis: extractHypothesis(ad.name),
+                        decision: trackerInfo.decision || classifyDecision(roas, ctrVal),
+                        hypothesis: trackerInfo.hypothesis || extractHypothesis(ad.name),
                         format: format,
-                        avatar: extractAvatar(ad.name),
-                        angle: extractAngle(ad.name),
-                        ctr: parseFloat(insights.ctr || 0),
-                        cpc: parseFloat(insights.cpc || 0),
+                        avatar: trackerInfo.avatar || extractAvatar(ad.name),
+                        angle: trackerInfo.angle || extractAngle(ad.name),
+                        ctr: ctrVal,
+                        cpc: cpcVal,
                         spend: spend,
                         roas: roas,
                         frequency: parseFloat(insights.frequency || 0),
                         purchases: parseInt(purchases),
-                        learnings: ''
+                        learnings: trackerInfo.learnings || '',
+                        aiInsights: generateAIInsights(spend, roas, ctrVal, cpcVal)
                     };
+
+                    return adData;
                 });
 
                 hideLoading();
@@ -1086,6 +1111,54 @@
             return 'Killed';
         }
 
+        // Generate AI insights based on performance metrics
+        function generateAIInsights(spend, roas, ctr, cpc) {
+            const insights = [];
+
+            // ROAS Analysis
+            if (roas >= 3.0) {
+                insights.push(`🎯 Strong ROAS (${roas.toFixed(2)}x) - This ad is highly profitable. Consider scaling spend.`);
+            } else if (roas >= 1.5 && roas < 3.0) {
+                insights.push(`📊 Moderate ROAS (${roas.toFixed(2)}x) - Profitable but room for optimization. Test new angles or creative variations.`);
+            } else if (roas > 0 && roas < 1.5) {
+                insights.push(`⚠️ Low ROAS (${roas.toFixed(2)}x) - Underperforming. Consider pausing or testing different targeting/creative.`);
+            }
+
+            // CTR Analysis
+            if (ctr >= 2.0) {
+                insights.push(`✨ Excellent CTR (${ctr.toFixed(2)}%) - Hook is working well. Audience finds this highly relevant.`);
+            } else if (ctr >= 1.0 && ctr < 2.0) {
+                insights.push(`👍 Good CTR (${ctr.toFixed(2)}%) - Decent engagement. Test stronger hooks to improve.`);
+            } else if (ctr < 1.0 && ctr > 0) {
+                insights.push(`👎 Low CTR (${ctr.toFixed(2)}%) - Weak hook or poor audience fit. Needs creative refresh.`);
+            }
+
+            // CPC Analysis
+            if (cpc <= 1.0 && cpc > 0) {
+                insights.push(`💰 Low CPC ($${cpc.toFixed(2)}) - Efficient spend. Good audience targeting.`);
+            } else if (cpc > 2.0) {
+                insights.push(`💸 High CPC ($${cpc.toFixed(2)}) - Expensive clicks. Review targeting or improve relevance score.`);
+            }
+
+            // Spend Analysis
+            if (spend > 200) {
+                insights.push(`📈 High spend ($${spend.toFixed(2)}) - Meta is scaling this. Monitor closely for fatigue.`);
+            } else if (spend < 50 && spend > 0) {
+                insights.push(`🔍 Low spend ($${spend.toFixed(2)}) - Limited data. Let it run longer before making decisions.`);
+            }
+
+            // Combined Analysis
+            if (roas > 2.5 && ctr > 1.5 && cpc < 1.5) {
+                insights.push(`🏆 WINNER PATTERN: High ROAS + Strong CTR + Low CPC. This is your golden combination - replicate this approach!`);
+            }
+
+            if (roas < 1.0 && ctr < 1.0) {
+                insights.push(`🛑 KILL SIGNAL: Both ROAS and CTR are poor. This concept isn't resonating - move on.`);
+            }
+
+            return insights.join(' ');
+        }
+
         // Load sample data
         function loadSampleData() {
             adsData = [
@@ -1107,7 +1180,8 @@
                     roas: 4.2,
                     frequency: 2.1,
                     purchases: 47,
-                    learnings: 'Emotional hooks perform best. Focus on before/after.'
+                    learnings: 'Emotional hooks perform best. Focus on before/after.',
+                    aiInsights: generateAIInsights(1250, 4.2, 2.45, 0.85)
                 },
                 {
                     creativeId: 'AD002',
@@ -1127,7 +1201,8 @@
                     roas: 2.8,
                     frequency: 1.8,
                     purchases: 28,
-                    learnings: 'Review screenshots work well. Need more testimonials.'
+                    learnings: 'Review screenshots work well. Need more testimonials.',
+                    aiInsights: generateAIInsights(890.50, 2.8, 1.82, 1.20)
                 },
                 {
                     creativeId: 'AD003',
@@ -1147,7 +1222,8 @@
                     roas: 0.8,
                     frequency: 3.2,
                     purchases: 5,
-                    learnings: 'Too technical. Need emotional angle instead.'
+                    learnings: 'Too technical. Need emotional angle instead.',
+                    aiInsights: generateAIInsights(450, 0.8, 0.65, 2.50)
                 },
                 {
                     creativeId: 'AD004',
@@ -1167,7 +1243,8 @@
                     roas: 5.6,
                     frequency: 1.5,
                     purchases: 89,
-                    learnings: 'Countdown timers are highly effective. Repeat this pattern.'
+                    learnings: 'Countdown timers are highly effective. Repeat this pattern.',
+                    aiInsights: generateAIInsights(2100, 5.6, 3.15, 0.65)
                 },
                 {
                     creativeId: 'AD005',
@@ -1307,7 +1384,6 @@
 
                 row.innerHTML = `
                     <td>${ad.creativeId}</td>
-                    <td><span class="format-badge" style="background: #6366f1;">${ad.batchNumber || '-'}</span></td>
                     <td>${ad.adsetName || 'Unknown'}</td>
                     <td>${ad.campaignName || 'Unknown'}</td>
                     <td>${ad.author}</td>
@@ -1323,7 +1399,16 @@
                     <td class="metric ${ad.roas >= 3.0 ? 'metric-good' : ad.roas < 1.5 ? 'metric-bad' : ''}">${ad.roas.toFixed(2)}</td>
                     <td class="metric">${ad.frequency.toFixed(2)}</td>
                     <td class="metric">${ad.purchases}</td>
-                    <td><textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)">${ad.learnings}</textarea></td>
+                    <td style="padding: 10px;">
+                        <div style="margin-bottom: 10px;">
+                            <div style="font-weight: 600; color: #4f46e5; margin-bottom: 4px; font-size: 11px; text-transform: uppercase;">📝 Your Learnings</div>
+                            <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" style="min-height: 60px;">${ad.learnings}</textarea>
+                        </div>
+                        <div>
+                            <div style="font-weight: 600; color: #10b981; margin-bottom: 4px; font-size: 11px; text-transform: uppercase;">🤖 AI Analysis</div>
+                            <div style="font-size: 11px; color: #374151; padding: 8px; background: #f3f4f6; border-radius: 4px; border-left: 3px solid #10b981; line-height: 1.5;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
+                        </div>
+                    </td>
                 `;
 
                 tbody.appendChild(row);
@@ -1646,16 +1731,15 @@
 
             // Create CSV content
             const headers = [
-                'Creative ID', 'BATCH #', 'Ad Set Name', 'Campaign', 'Author', 'Landing Page', 'Decision', 'Hypothesis',
+                'Creative ID', 'Ad Set Name', 'Campaign', 'Author', 'Landing Page', 'Decision', 'Hypothesis',
                 'Format', 'Avatar', 'Angle/Hook', 'CTR (%)', 'CPC ($)', 'Spend ($)',
-                'ROAS', 'Frequency', 'Purchases', 'Learnings'
+                'ROAS', 'Frequency', 'Purchases', 'Your Learnings', 'AI Insights'
             ];
 
             const csvContent = [
                 headers.join(','),
                 ...adsData.map(ad => [
                     ad.creativeId,
-                    ad.batchNumber || '',
                     `"${ad.adsetName || ''}"`,
                     `"${ad.campaignName || ''}"`,
                     `"${ad.author}"`,
@@ -1671,7 +1755,8 @@
                     ad.roas.toFixed(2),
                     ad.frequency.toFixed(2),
                     ad.purchases,
-                    `"${ad.learnings.replace(/"/g, '""')}"`
+                    `"${(ad.learnings || '').replace(/"/g, '""')}"`,
+                    `"${(ad.aiInsights || '').replace(/"/g, '""')}"`
                 ].join(','))
             ].join('\n');
 
