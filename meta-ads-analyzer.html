@@ -453,8 +453,8 @@
         }
 
         .insight-card h3::before {
-            content: '📊';
-            font-size: 20px;
+            content: '';
+            font-size: 0;
         }
 
         .insight-list {
@@ -572,6 +572,130 @@
             color: #6366F1;
             text-decoration: underline;
         }
+
+        /* Action buttons */
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 11px;
+            border-radius: 6px;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+            border: 1px solid #EF4444;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-warning {
+            background: #F59E0B;
+            color: white;
+            border: 1px solid #F59E0B;
+        }
+
+        .btn-warning:hover {
+            background: #D97706;
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+
+        /* Performance Banner */
+        .performance-banner {
+            padding: 24px 40px;
+            background: rgba(99, 102, 241, 0.05);
+            border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+        }
+
+        .performance-banner h2 {
+            font-size: 18px;
+            font-weight: 700;
+            color: #E2E8F0;
+            margin-bottom: 16px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .performance-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        .performance-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .performance-card:hover {
+            background: rgba(255, 255, 255, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .performance-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .performance-card-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .performance-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .performance-status.winning {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34D399;
+        }
+
+        .performance-status.struggling {
+            background: rgba(239, 68, 68, 0.2);
+            color: #FCA5A5;
+        }
+
+        .performance-metric {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            font-size: 13px;
+        }
+
+        .performance-metric:last-child {
+            border-bottom: none;
+        }
+
+        .performance-metric-label {
+            color: #CBD5E1;
+        }
+
+        .performance-metric-value {
+            font-weight: 700;
+            color: #E2E8F0;
+        }
     </style>
 </head>
 <body>
@@ -592,15 +716,19 @@
         <div class="api-config hidden" id="apiConfig">
             <div class="control-group">
                 <label>Access Token <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="font-size: 10px; color: #3b82f6;">(Get Token)</a></label>
-                <input type="password" id="accessToken" placeholder="Your Meta Access Token (needs ads_read permission)" style="min-width: 300px;">
+                <input type="password" id="accessToken" placeholder="Your Meta Access Token (needs ads_management permission)" style="min-width: 300px;">
             </div>
             <div class="control-group">
                 <label>Ad Account ID <a href="https://business.facebook.com/settings/ad-accounts" target="_blank" style="font-size: 10px; color: #3b82f6;">(Find ID)</a></label>
                 <input type="text" id="adAccountId" placeholder="act_123456789 or just 123456789">
             </div>
             <div class="control-group">
-                <label>Date Range (days)</label>
-                <input type="number" id="dateRange" value="30" min="1" max="90">
+                <label>Start Date</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="control-group">
+                <label>End Date</label>
+                <input type="date" id="endDate">
             </div>
             <div class="control-group">
                 <label>Max Ads to Fetch</label>
@@ -660,6 +788,14 @@
             <button class="btn btn-secondary" onclick="clearFilters()">Clear Filters</button>
         </div>
 
+        <!-- Performance Banner -->
+        <div class="performance-banner hidden" id="performanceBanner">
+            <h2>Performance Overview by Author</h2>
+            <div class="performance-grid" id="performanceGrid">
+                <!-- Performance cards will be inserted here -->
+            </div>
+        </div>
+
         <div class="stats-bar" id="statsBar">
             <div class="stat">
                 <span class="stat-label">Total Ads</span>
@@ -695,15 +831,13 @@
                         <th class="sortable" onclick="sortTable('creativeId')">Creative ID</th>
                         <th class="sortable" onclick="sortTable('variation')">Variation</th>
                         <th class="sortable" onclick="sortTable('adsetName')">Ad Set Name</th>
-                        <th class="sortable" onclick="sortTable('campaignName')">Campaign</th>
                         <th class="sortable" onclick="sortTable('author')">Author</th>
                         <th class="sortable" onclick="sortTable('decision')">Decision</th>
-                        <th class="sortable" onclick="sortTable('format')">Format</th>
-                        <th class="sortable" onclick="sortTable('avatar')">Avatar</th>
                         <th class="sortable" onclick="sortTable('ctr')">CTR (%)</th>
                         <th class="sortable" onclick="sortTable('cpc')">CPC ($)</th>
                         <th class="sortable" onclick="sortTable('spend')">Spend ($)</th>
                         <th class="sortable" onclick="sortTable('roas')">ROAS</th>
+                        <th>Actions</th>
                         <th style="min-width: 350px;">Learnings & AI</th>
                     </tr>
                 </thead>
@@ -1178,6 +1312,7 @@
 
                     const adData = {
                         creativeId: ad.id,
+                        adsetId: ad.adset?.id || null,
                         batchNumber: batchNumber,
                         variation: variation,
                         adsetName: ad.adset?.name || 'Unknown',
@@ -1221,6 +1356,169 @@
                 alert('Error fetching ads: ' + error.message);
                 console.error('Full error:', error);
             }
+        }
+
+        // Pause adset
+        async function pauseAdset(adsetId, adsetName) {
+            if (!adsetId) {
+                alert('No adset ID available for this ad');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to PAUSE adset: ${adsetName}?`)) {
+                return;
+            }
+
+            const accessToken = document.getElementById('accessToken').value;
+            if (!accessToken) {
+                alert('Please configure your API access token first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://graph.facebook.com/v18.0/${adsetId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'PAUSED',
+                        access_token: accessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to pause adset: ${response.statusText}`);
+                }
+
+                alert(`Successfully paused adset: ${adsetName}`);
+                // Refresh the data
+                await fetchAds();
+            } catch (error) {
+                alert(`Error pausing adset: ${error.message}`);
+                console.error('Pause error:', error);
+            }
+        }
+
+        // Kill (archive) adset
+        async function killAdset(adsetId, adsetName) {
+            if (!adsetId) {
+                alert('No adset ID available for this ad');
+                return;
+            }
+
+            if (!confirm(`Are you sure you want to KILL (archive) adset: ${adsetName}? This action cannot be easily undone.`)) {
+                return;
+            }
+
+            const accessToken = document.getElementById('accessToken').value;
+            if (!accessToken) {
+                alert('Please configure your API access token first');
+                return;
+            }
+
+            try {
+                const response = await fetch(`https://graph.facebook.com/v18.0/${adsetId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        status: 'ARCHIVED',
+                        access_token: accessToken
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Failed to archive adset: ${response.statusText}`);
+                }
+
+                alert(`Successfully killed adset: ${adsetName}`);
+                // Refresh the data
+                await fetchAds();
+            } catch (error) {
+                alert(`Error killing adset: ${error.message}`);
+                console.error('Kill error:', error);
+            }
+        }
+
+        // Generate performance overview banner
+        function generatePerformanceBanner() {
+            const banner = document.getElementById('performanceBanner');
+            const grid = document.getElementById('performanceGrid');
+
+            if (adsData.length === 0) {
+                banner.classList.add('hidden');
+                return;
+            }
+
+            // Group by author
+            const authorStats = {};
+
+            adsData.forEach(ad => {
+                const author = ad.author || 'Unknown';
+                if (!authorStats[author]) {
+                    authorStats[author] = {
+                        totalAds: 0,
+                        totalSpend: 0,
+                        totalRevenue: 0,
+                        winners: 0,
+                        avgCTR: 0,
+                        avgROAS: 0
+                    };
+                }
+
+                authorStats[author].totalAds++;
+                authorStats[author].totalSpend += ad.spend;
+                authorStats[author].totalRevenue += (ad.spend * ad.roas);
+                if (ad.decision === 'Winner') authorStats[author].winners++;
+                authorStats[author].avgCTR += ad.ctr;
+                authorStats[author].avgROAS += ad.roas;
+            });
+
+            // Calculate averages
+            Object.keys(authorStats).forEach(author => {
+                const stats = authorStats[author];
+                stats.avgCTR = stats.avgCTR / stats.totalAds;
+                stats.avgROAS = stats.avgROAS / stats.totalAds;
+            });
+
+            // Generate cards
+            grid.innerHTML = '';
+            Object.keys(authorStats).sort((a, b) => authorStats[b].avgROAS - authorStats[a].avgROAS).forEach(author => {
+                const stats = authorStats[author];
+                const isWinning = stats.avgROAS >= 2.0;
+                const statusClass = isWinning ? 'winning' : 'struggling';
+                const statusText = isWinning ? 'Winning' : 'Needs Work';
+
+                const card = document.createElement('div');
+                card.className = 'performance-card';
+                card.innerHTML = `
+                    <div class="performance-card-header">
+                        <span class="performance-card-title">${author}</span>
+                        <span class="performance-status ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="performance-metric">
+                        <span class="performance-metric-label">Avg ROAS</span>
+                        <span class="performance-metric-value">${stats.avgROAS.toFixed(2)}x</span>
+                    </div>
+                    <div class="performance-metric">
+                        <span class="performance-metric-label">Total Spend</span>
+                        <span class="performance-metric-value">$${stats.totalSpend.toFixed(2)}</span>
+                    </div>
+                    <div class="performance-metric">
+                        <span class="performance-metric-label">Winners</span>
+                        <span class="performance-metric-value">${stats.winners} / ${stats.totalAds}</span>
+                    </div>
+                    <div class="performance-metric">
+                        <span class="performance-metric-label">Avg CTR</span>
+                        <span class="performance-metric-value">${stats.avgCTR.toFixed(2)}%</span>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+
+            banner.classList.remove('hidden');
         }
 
         // Helper functions to extract data from ad names
@@ -1315,44 +1613,44 @@
 
             // ROAS Analysis
             if (roas >= 3.0) {
-                insights.push(`🎯 Strong ROAS (${roas.toFixed(2)}x) - Highly profitable. Scale this variation.`);
+                insights.push(`Strong ROAS (${roas.toFixed(2)}x) - Highly profitable. Scale this variation.`);
             } else if (roas >= 1.5 && roas < 3.0) {
-                insights.push(`📊 Moderate ROAS (${roas.toFixed(2)}x) - Profitable but room for optimization.`);
+                insights.push(`Moderate ROAS (${roas.toFixed(2)}x) - Profitable but room for optimization.`);
             } else if (roas > 0 && roas < 1.5) {
-                insights.push(`⚠️ Low ROAS (${roas.toFixed(2)}x) - Underperforming.`);
+                insights.push(`Low ROAS (${roas.toFixed(2)}x) - Underperforming.`);
             }
 
             // CTR Analysis
             if (ctr >= 2.0) {
-                insights.push(`✨ Excellent CTR (${ctr.toFixed(2)}%) - Hook resonating well.`);
+                insights.push(`Excellent CTR (${ctr.toFixed(2)}%) - Hook resonating well.`);
             } else if (ctr >= 1.0 && ctr < 2.0) {
-                insights.push(`👍 Good CTR (${ctr.toFixed(2)}%) - Decent engagement.`);
+                insights.push(`Good CTR (${ctr.toFixed(2)}%) - Decent engagement.`);
             } else if (ctr < 1.0 && ctr > 0) {
-                insights.push(`👎 Low CTR (${ctr.toFixed(2)}%) - Weak hook.`);
+                insights.push(`Low CTR (${ctr.toFixed(2)}%) - Weak hook.`);
             }
 
             // CPA Analysis - Critical metric for scaling decisions
             if (spend < TARGET_CPA * 0.5) {
                 const remaining = (TARGET_CPA - spend).toFixed(2);
-                insights.push(`💰 Spent $${spend.toFixed(2)} (well under $${TARGET_CPA} CPA target) - Strong candidate for scaling. $${remaining} room to spend.`);
+                insights.push(`Spent $${spend.toFixed(2)} (well under $${TARGET_CPA} CPA target) - Strong candidate for scaling. $${remaining} room to spend.`);
             } else if (spend < TARGET_CPA) {
                 const remaining = (TARGET_CPA - spend).toFixed(2);
-                insights.push(`💰 Spent $${spend.toFixed(2)} (under $${TARGET_CPA} CPA target) - Room to scale spend. $${remaining} remaining.`);
+                insights.push(`Spent $${spend.toFixed(2)} (under $${TARGET_CPA} CPA target) - Room to scale spend. $${remaining} remaining.`);
             } else if (spend >= TARGET_CPA && spend < TARGET_CPA * 1.5) {
                 const over = (spend - TARGET_CPA).toFixed(2);
-                insights.push(`💸 Spent $${spend.toFixed(2)} (above $${TARGET_CPA} CPA) - Optimize or kill variation. $${over} over target.`);
+                insights.push(`Spent $${spend.toFixed(2)} (above $${TARGET_CPA} CPA) - Optimize or kill variation. $${over} over target.`);
             } else if (spend >= TARGET_CPA * 1.5) {
                 const over = (spend - TARGET_CPA).toFixed(2);
-                insights.push(`🛑 Spent $${spend.toFixed(2)} (far above $${TARGET_CPA} CPA target) - Kill this variation immediately. $${over} over target.`);
+                insights.push(`KILL: Spent $${spend.toFixed(2)} (far above $${TARGET_CPA} CPA target) - Kill this variation immediately. $${over} over target.`);
             }
 
             // Combined Analysis
             if (roas > 2.5 && ctr > 1.5 && spend < TARGET_CPA) {
-                insights.push(`🏆 WINNER: High ROAS + Strong CTR + Under CPA - Perfect scaling candidate!`);
+                insights.push(`WINNER: High ROAS + Strong CTR + Under CPA - Perfect scaling candidate!`);
             }
 
             if (roas < 1.0 && ctr < 1.0) {
-                insights.push(`🛑 KILL SIGNAL: Both ROAS and CTR are poor. Move on.`);
+                insights.push(`KILL SIGNAL: Both ROAS and CTR are poor. Move on.`);
             }
 
             return insights.join(' ');
@@ -1363,6 +1661,7 @@
             adsData = [
                 {
                     creativeId: 'AD001',
+                    adsetId: '23851234567890',
                     batchNumber: '023',
                     variation: '172A',
                     adsetName: 'Fitness Transformation - 25-40',
@@ -1385,11 +1684,12 @@
                 },
                 {
                     creativeId: 'AD002',
+                    adsetId: '23851234567891',
                     batchNumber: '024',
                     variation: '172B',
                     adsetName: 'Social Proof Test',
                     campaignName: 'Q4 Fitness Campaign',
-                    author: 'Riley',
+                    author: 'Roman',
                     landingPage: 'https://example.com/product-b',
                     decision: 'Launched',
                     hypothesis: 'Social proof increases conversions',
@@ -1407,11 +1707,12 @@
                 },
                 {
                     creativeId: 'AD003',
+                    adsetId: '23851234567892',
                     batchNumber: '025',
                     variation: '172C',
                     adsetName: 'Feature Test',
                     campaignName: 'Q4 Fitness Campaign',
-                    author: 'Nidal',
+                    author: 'Gary',
                     landingPage: 'https://example.com/product-c',
                     decision: 'Killed',
                     hypothesis: 'Feature-focused messaging drives clicks',
@@ -1575,6 +1876,9 @@
             table.style.display = 'table';
             emptyState.style.display = 'none';
 
+            // Generate performance banner
+            generatePerformanceBanner();
+
             filteredData = [...adsData];
             applyFilters();
         }
@@ -1591,8 +1895,8 @@
                 let variationHtml = '';
                 if (ad.variation) {
                     const winningClass = ad.isWinningVariation ? ' winning' : '';
-                    const crownHtml = ad.isWinningVariation ? '<span class="crown">👑</span> ' : '';
-                    variationHtml = `<span class="variation-badge${winningClass}">${crownHtml}${ad.variation}</span>`;
+                    const winningLabel = ad.isWinningVariation ? 'WINNER ' : '';
+                    variationHtml = `<span class="variation-badge${winningClass}">${winningLabel}${ad.variation}</span>`;
                 } else {
                     variationHtml = '<span style="color: #64748B;">—</span>';
                 }
@@ -1601,22 +1905,29 @@
                     <td>${ad.creativeId}</td>
                     <td>${variationHtml}</td>
                     <td>${ad.adsetName || 'Unknown'}</td>
-                    <td>${ad.campaignName || 'Unknown'}</td>
                     <td>${ad.author}</td>
                     <td><span class="decision-badge decision-${ad.decision.toLowerCase()}">${ad.decision}</span></td>
-                    <td><span class="format-badge">${ad.format}</span></td>
-                    <td>${ad.avatar}</td>
                     <td class="metric ${ad.ctr >= 2.0 ? 'metric-good' : ad.ctr < 1.0 ? 'metric-bad' : ''}">${ad.ctr.toFixed(2)}</td>
                     <td class="metric ${ad.cpc <= 1.0 ? 'metric-good' : ad.cpc > 2.0 ? 'metric-bad' : ''}">${ad.cpc.toFixed(2)}</td>
                     <td class="metric">${ad.spend.toFixed(2)}</td>
                     <td class="metric ${ad.roas >= 3.0 ? 'metric-good' : ad.roas < 1.5 ? 'metric-bad' : ''}">${ad.roas.toFixed(2)}</td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-warning" onclick="pauseAdset('${ad.adsetId}', '${ad.adsetName}')" title="Pause this adset">
+                                Pause
+                            </button>
+                            <button class="btn btn-sm btn-danger" onclick="killAdset('${ad.adsetId}', '${ad.adsetName}')" title="Archive this adset">
+                                Kill
+                            </button>
+                        </div>
+                    </td>
                     <td style="padding: 16px;">
                         <div style="margin-bottom: 12px;">
-                            <div style="font-weight: 700; color: #A5B4FC; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">📝 Your Learnings</div>
+                            <div style="font-weight: 700; color: #A5B4FC; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Your Learnings</div>
                             <textarea class="learnings-input" data-index="${index}" onchange="updateLearnings(${index}, this.value)" placeholder="Enter insights..." style="min-height: 60px;">${ad.learnings}</textarea>
                         </div>
                         <div>
-                            <div style="font-weight: 700; color: #34D399; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">🤖 AI Analysis</div>
+                            <div style="font-weight: 700; color: #34D399; margin-bottom: 6px; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">AI Analysis</div>
                             <div style="font-size: 12px; color: #CBD5E1; padding: 12px; background: rgba(16, 185, 129, 0.1); border-radius: 6px; border-left: 3px solid #10B981; line-height: 1.6;">${ad.aiInsights || 'AI insights will appear here after analysis'}</div>
                         </div>
                     </td>
